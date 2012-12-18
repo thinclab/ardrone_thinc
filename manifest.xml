@@ -1,0 +1,15 @@
+<package>
+  <description brief="ardrone_thinc">
+
+     ardrone_thinc
+
+  </description>
+  <author>David Millard</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ardrone_thinc</url>
+  <depend package="ardrone_autonomy"/>
+
+</package>
+
+
