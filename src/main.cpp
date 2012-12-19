@@ -5,13 +5,13 @@
 int main(int argc, char **argv) {
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
-    ros::Publisher takeoff_pub = n.advertise<std_msgs::Empty>("ardrone/takeoff", 5, true);
-    ros::Publisher land_pub = n.advertise<std_msgs::Empty>("ardrone/land", 5, true);
-    ros::Publisher reset_pub = n.advertise<std_msgs::Empty>("ardrone/reset", 5, true);
-    ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10, true);
+    ros::Publisher takeoff_pub = n.advertise<std_msgs::Empty>("ardrone/takeoff", 5, false);
+    ros::Publisher land_pub = n.advertise<std_msgs::Empty>("ardrone/land", 5, false);
+    ros::Publisher reset_pub = n.advertise<std_msgs::Empty>("ardrone/reset", 5, false);
+    ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10, false);
     ros::Rate loop_rate(10);
 
-//  ros::Duration(1.0).sleep();
+  ros::Duration(1.0).sleep();
     
     if(ros::ok()) {
         std_msgs::Empty takeoff_msg;
