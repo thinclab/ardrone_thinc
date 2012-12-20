@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ardrone_thinc</url>
   <depend package="ardrone_autonomy"/>
+  <depend package="opencv2"/>
 
 </package>
 
