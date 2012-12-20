@@ -10,7 +10,7 @@ IplImage* GetThresholdedImage(IplImage* img) {
     IplImage* imgHSV = cvCreateImage(cvGetSize(img), 8, 3);
     cvCvtColor(img, imgHSV, CV_BGR2HSV); 
     IplImage* imgThreshed = cvCreateImage(cvGetSize(img), 8, 1); 
-    cvInRangeS(imgHSV, cvScalar(20, 100, 100), cvScalar(30, 255, 255), imgThreshed); 
+    cvInRangeS(imgHSV, cvScalar(162, 80, 220), cvScalar(172, 250, 255), imgThreshed); 
     cvReleaseImage(&imgHSV);
     return imgThreshed;
 } 
