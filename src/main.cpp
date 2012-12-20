@@ -11,7 +11,7 @@ IplImage* GetThresholdedImage(IplImage* img) {
     cvCvtColor(img, imgHSV, CV_BGR2HSV); 
     IplImage* imgThreshed = cvCreateImage(cvGetSize(img), 8, 1); 
     cvInRangeS(imgHSV, cvScalar(20, 100, 100), cvScalar(30, 255, 255), imgThreshed); 
-    cvReleaseImage(&amp imgHSV);
+    cvReleaseImage(&imgHSV);
     return imgThreshed;
 } 
 
@@ -32,7 +32,7 @@ int main() {
     
     // This image holds the "scribble data...
     // the tracked positions of the ball
-    IplImage* imgScrabble = NULL; 
+    IplImage* imgScribble = NULL; 
 
     // An infinite loop
     while(true) {
@@ -55,7 +55,7 @@ int main() {
 
         // Calculate the moments to estimate the position of the ball
         CvMoments *moments = (CvMoments*)malloc(sizeof(CvMoments)); 
-        CvMoments(imgYellowThresh, moments, 1); 
+        cvMoments(imgYellowThresh, moments, 1); 
 
         // The actual moment values
         double moment10 = cvGetSpatialMoment(moments, 1, 0); 
@@ -76,7 +76,7 @@ int main() {
         printf("position (%d, %d)\n", posX, posY); 
 
         // We want to draw a line only if it's a valid position
-        if(lastX&gt;0 &amp;&amp; lastY&gt;0 &amp;&amp; posX&gt;0 &amp;&amp; posY&gt;0) {
+        if(lastX>0 && lastY>0 && posX>0 && posY>0) {
             // Draw a yellow line from the previous point to the current point
             cvLine(imgScribble, cvPoint(posX, posY), cvPoint(lastX, lastY), cvScalar(0,255,255), 5);
         }
@@ -94,12 +94,12 @@ int main() {
         }
 
          // Release the thresholded image+moments... we need no memory leaks.. please
-        cvReleaseImage(&amp;imgYellowThresh);
+        cvReleaseImage(&imgYellowThresh);
         delete moments;
     }
 
     // We're done using the camera. Other applications can now use it
-    cvReleaseCapture(&amp;capture);
+    cvReleaseCapture(&capture);
     return 0;
 }
 
