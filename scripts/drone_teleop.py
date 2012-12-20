@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('drone_teleop')
+import roslib; roslib.load_manifest('ardrone_thinc')
 import rospy
 
 from geometry_msgs.msg import Twist
