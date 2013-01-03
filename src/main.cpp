@@ -25,6 +25,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
+    ros::Duration(1.0).sleep();
 
     // publisher, subscribers, and services
     ArdroneThinc at;
@@ -32,6 +33,7 @@ int main(int argc, char **argv) {
     at.land = n.advertise<std_msgs::Empty>("ardrone/land", 5);
     at.reset = n.advertise<std_msgs::Empty>("ardrone/reset", 5);
     at.twist = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+    at.thresh = n.advertise<sensor_msgs::Image>("thinc/thresh", 10);
     at.cam = n.subscribe<sensor_msgs::Image>("ardrone/image_raw", 1,
             &ArdroneThinc::CamCallback, &at);
     at.camchannel = n.serviceClient<ardrone_autonomy::CamSelect>("ardrone/setcamchannel");
@@ -40,6 +42,7 @@ int main(int argc, char **argv) {
     if(ros::ok()) {
         ardrone_autonomy::CamSelect camsrv;
         camsrv.request.channel = 1;
+        at.camchannel.call(camsrv);
         at.launch.publish(at.empty_msg);
     } 
     

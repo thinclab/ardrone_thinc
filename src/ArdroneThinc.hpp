@@ -9,6 +9,7 @@ class ArdroneThinc {
         ros::Publisher land;
         ros::Publisher reset;
         ros::Publisher twist;
+        ros::Publisher thresh;
         ros::Subscriber cam;
         ros::ServiceClient camchannel;
         std_msgs::Empty empty_msg;
