@@ -1,10 +1,23 @@
-ardrone_thinc
+ardrone\_thinc
 =============
+
+Installation
+------------
+
+```bash
+$ cd ~/ros/stacks   # or equivalent
+$ git clone https://github.com/dmillard/ardrone\_thinc.git
+$ rospack profile && rosstack profile
+$ roscd ardrone_thinc
+$ make
+```
+
+Notes
+-----
+
+* Thresholded images are published to `thinc/thresh`.
 
 TODO
 ----
 
-1. Figure out how to land the drone reliably (programatically).
-2. See if we can get more reliable takeoffs (might have to do with sonar sensor, seems to work on flat surfaces).
-3. Get the drone to hover in one place more reliably.
-4. Understand git.
+1. Stop killer attack behaviour when trying to stabilize hover
