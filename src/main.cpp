@@ -25,7 +25,6 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
-    ros::Duration(1.0).sleep();
 
     // publisher, subscribers, and services
     ArdroneThinc at;
@@ -37,6 +36,9 @@ int main(int argc, char **argv) {
     at.cam = n.subscribe<sensor_msgs::Image>("ardrone/image_raw", 1,
             &ArdroneThinc::CamCallback, &at);
     at.camchannel = n.serviceClient<ardrone_autonomy::CamSelect>("ardrone/setcamchannel");
+
+    // sleep to allow everything to register with roscore
+    ros::Duration(1.0).sleep();
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {
