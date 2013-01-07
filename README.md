@@ -6,7 +6,7 @@ Installation
 
 ```bash
 $ cd ~/ros/stacks   # or equivalent
-$ git clone https://github.com/dmillard/ardrone\_thinc.git
+$ git clone https://github.com/dmillard/ardrone_thinc.git
 $ rospack profile && rosstack profile
 $ roscd ardrone_thinc
 $ make

@@ -45,12 +45,15 @@ int main(int argc, char **argv) {
         ardrone_autonomy::CamSelect camsrv;
         camsrv.request.channel = 1;
         at.camchannel.call(camsrv);
-        at.launch.publish(at.empty_msg);
+        at.twist_msg.linear.x = 0;
+        at.twist_msg.linear.y = 0;
+        at.twist_msg.linear.z = 0;
+        //at.launch.publish(at.empty_msg);
     } 
     
     // hover drone in place
     while(ros::ok()) {
-        ros::spinOnce(); // see CamCallback()
+        ros::spinOnce(); // see ArdroneThinc.CamCallback()
         loop_rate.sleep();
     }
 
