@@ -2,6 +2,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Empty.h"
+#include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
 
 // opencv2
@@ -26,7 +27,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
 
-    // publisher, subscribers, and services
+    // publisher, subscribers, and serviceclients
     ArdroneThinc at;
     at.launch = n.advertise<std_msgs::Empty>("ardrone/takeoff", 5);
     at.land = n.advertise<std_msgs::Empty>("ardrone/land", 5);
@@ -36,15 +37,23 @@ int main(int argc, char **argv) {
     at.cam = n.subscribe<sensor_msgs::Image>("ardrone/image_raw", 1,
             &ArdroneThinc::CamCallback, &at);
     at.camchannel = n.serviceClient<ardrone_autonomy::CamSelect>("ardrone/setcamchannel");
+    at.flattrim = n.serviceClient<std_srvs::Empty>("ardrone/flattrim");
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {
+        // set camera to bottom
         ardrone_autonomy::CamSelect camsrv;
         camsrv.request.channel = 1;
         at.camchannel.call(camsrv);
+
+        // calibrate to flat surface
+        std_srvs::Empty trimsrv;
+        at.flattrim.call(trimsrv);
+
+        // hover initially
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;

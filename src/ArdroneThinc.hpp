@@ -1,3 +1,6 @@
+#ifndef ARDRONE_THINC_HPP_GUARD
+#define ARDRONE_THINC_HPP_GUARD
+
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Empty.h"
@@ -12,7 +15,10 @@ class ArdroneThinc {
         ros::Publisher thresh;
         ros::Subscriber cam;
         ros::ServiceClient camchannel;
+        ros::ServiceClient flattrim;
         std_msgs::Empty empty_msg;
         geometry_msgs::Twist twist_msg;
         void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
 };
+
+#endif
