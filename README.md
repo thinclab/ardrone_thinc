@@ -28,7 +28,7 @@ Notes
 -----
 
 * Thresholded images are published to `thinc/thresh`.
-* To run simulator, `roslaunch cvg\_sim\_test 3boxes\_room.launch`, replacing
+* To run simulator, `roslaunch cvg_sim_test 3boxes_room.launch`, replacing
   3boxes\_room.launch with launchfile of your choice.
 
 TODO
