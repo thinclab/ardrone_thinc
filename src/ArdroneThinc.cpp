@@ -65,8 +65,5 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     if(yp > UB) twist_msg.linear.x = -VEL;
     else if(yp < LB) twist_msg.linear.x = VEL;
     else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
-    //ROS_INFO("twist message is: x=%f, y=%f",
-    //        twist_msg.linear.x,
-    //        twist_msg.linear.y);
-    //twist.publish(twist_msg);
+    twist.publish(twist_msg);
 }

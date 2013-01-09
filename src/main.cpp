@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
-        //at.launch.publish(at.empty_msg);
+        at.launch.publish(at.empty_msg);
     } 
     
     // hover drone in place

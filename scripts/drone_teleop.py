@@ -23,12 +23,12 @@ CTRL+c to quit
 """
 
 move_bindings = {
-		68:('linear', 'y', 0.05), #left
-		67:('linear', 'y', -0.05), #right
-		65:('linear', 'x', 0.05), #forward
-		66:('linear', 'x', -0.05), #back
-		'w':('linear', 'z', 0.05),
-		's':('linear', 'z', -0.05),
+		68:('linear', 'y', 1), #left
+		67:('linear', 'y', -1), #right
+		65:('linear', 'x', 1), #forward
+		66:('linear', 'x', -1), #back
+		'w':('linear', 'z', 1),
+		's':('linear', 'z', -1),
 		'a':('angular', 'z', 1),
 		'd':('angular', 'z', -1),
 	       }
