@@ -45,9 +45,9 @@ if __name__=="__main__":
 	print msg
 	
 	pub = rospy.Publisher('cmd_vel', Twist)
-	land_pub = rospy.Publisher('/ardrone/land', Empty)
-	reset_pub = rospy.Publisher('/ardrone/reset', Empty)
-	takeoff_pub = rospy.Publisher('/ardrone/takeoff', Empty)
+	land_pub = rospy.Publisher('ardrone/land', Empty)
+	reset_pub = rospy.Publisher('ardrone/reset', Empty)
+	takeoff_pub = rospy.Publisher('ardrone/takeoff', Empty)
 
 	rospy.init_node('drone_teleop')
 
