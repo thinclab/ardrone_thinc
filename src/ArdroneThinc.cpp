@@ -25,10 +25,12 @@ using namespace std;
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     cv_bridge::CvImageConstPtr cvimg = cv_bridge::toCvShare(rosimg);
+    cv_bridge::CvImagePtr cvimgsmall(new cv_bridge::CvImage()); 
     // convert ros image to opencv image
     cv_bridge::CvImagePtr cvimghsv(new cv_bridge::CvImage()); 
     cv_bridge::CvImagePtr cvimgthresh(new cv_bridge::CvImage()); 
-    cvtColor(cvimg->image, cvimghsv->image, CV_RGB2HSV); // RGB->HSV
+    resize(cvimg->image, cvimgsmall->image, Size(), .25, .25);
+    cvtColor(cvimgsmall->image, cvimghsv->image, CV_RGB2HSV); // RGB->HSV
     blur(cvimghsv->image, cvimghsv->image, Size(2, 2)); // remove noise
     // threshold image
     inRange(cvimghsv->image,
