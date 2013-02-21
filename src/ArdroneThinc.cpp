@@ -29,15 +29,15 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     cv_bridge::CvImagePtr grey(new cv_bridge::CvImage()); 
 
     // resize image (faster processing);
-    int new_w = orig->image.size.p[0];
-    int new_h = (new_w*orig->image.size.p[1])/orig->image.size.p[0];
+    int new_h = orig->image.size.p[0];
+    int new_w = (new_h*orig->image.size.p[1])/orig->image.size.p[0];
     resize(orig->image, orig->image, Size(new_w, new_h), 0, 0);
 
     // detect circles using hough transform
     cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
-    GaussianBlur(grey->image, grey->image, Size(2, 2), 0); // denoise
+    GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
     vector<Vec3f> c;
-    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 0, 200, 100);
+    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120);
     for(size_t i = 0; i < c.size(); i++) {
         Point center(cvRound(c[i][0]), cvRound(c[i][1]));
         int radius = cvRound(c[i][2]);
