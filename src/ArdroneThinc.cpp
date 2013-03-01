@@ -57,3 +57,10 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
     //twist.publish(twist_msg);
 }
+
+
+
+/*
+ * Create function to add drones to vector from thinc_main.
+ * Give access to number of columns and rows in grid.
+ */
