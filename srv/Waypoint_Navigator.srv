@@ -1,0 +1,5 @@
+int64 drone_id
+int64 x
+int64 y
+---
+int64 success
