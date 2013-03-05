@@ -10,7 +10,7 @@ using namespace std;
 
 class drone {
     public: 
-        drone(string, int, int); 
+        drone(int, int, int); 
         void advertise(void);
         void move_on_grid(int, int);
         void move_absolute(double, double, double);

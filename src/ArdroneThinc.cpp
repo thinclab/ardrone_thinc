@@ -58,6 +58,11 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //twist.publish(twist_msg);
 }
 
+bool move(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res) {
+    //check for valid grid cell & look for drone, then move   
+    return true;
+}
+
 
 
 /*
