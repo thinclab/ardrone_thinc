@@ -6,13 +6,14 @@
 #include "std_msgs/Empty.h"
 #include "geometry_msgs/Twist.h"
 #include "drone.cpp"
+#include "ardrone_thinc/Waypoint_Navigator.h"
 #include <vector> 
 
 using namespace std; 
 
 class ArdroneThinc {
     public:
-        ros::ServiceServer waypoint_navigator_server; 
+        ros::ServiceServer waypoint_navigator_service; 
         ros::ServiceClient waypoint_navigator_client; 
 
         vector<ros::Publisher> launch_publishers;
@@ -31,8 +32,7 @@ class ArdroneThinc {
 
         vector<drone*> drones; 
 
-        bool move(ardrone_thinc::waypoint_navigator::Request, ardrone_thinc::waypoint_navigator::Response);//did have ardrone_thinc:: 
-                                                                            //preceding Waypoint...
+        bool move(ardrone_thinc::Waypoint_Navigator::Request, ardrone_thinc::Waypoint_Navigator::Response);
 };
 
 #endif

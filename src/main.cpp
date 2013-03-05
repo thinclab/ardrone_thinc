@@ -74,8 +74,9 @@ int main(int argc, char **argv) {
 
     }
 
-    ros::ServiceServer waypoint_navigator_service = n.advertiseService("waypoint_navigator_server", &ArdroneThinc::move, &at);
+    at.waypoint_navigator_service = n.advertiseService("waypoint_navigator_server", &ArdroneThinc::move, &at);
 
+    at.waypoint_navigator_client = n.serviceClient<ardrone_thinc::Waypoint_Navigator>("waypoint_navigator_service"); 
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();
