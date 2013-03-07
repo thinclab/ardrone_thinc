@@ -5,7 +5,7 @@
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Empty.h"
 #include "geometry_msgs/Twist.h"
-#include "drone.cpp"
+#include "drone.hpp"
 #include "ardrone_thinc/Waypoint_Navigator.h"
 #include <vector> 
 
@@ -15,7 +15,6 @@ class ArdroneThinc {
     public:
         ros::ServiceServer waypoint_navigator_service; 
         ros::ServiceClient waypoint_navigator_client; 
-
         vector<ros::Publisher> launch_publishers;
         vector<ros::Publisher> land_publishers;
         vector<ros::Publisher> reset_publishers;
@@ -27,12 +26,17 @@ class ArdroneThinc {
 
         std_msgs::Empty empty_msg;
         geometry_msgs::Twist twist_msg;
+        vector<drone*> drones; 
+        int columns; 
+        int rows; 
 
         void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
+        bool Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res);
+        bool is_valid_grid_cell(int, int); 
+        bool move(int, char); 
+       
 
-        vector<drone*> drones; 
 
-        bool move(ardrone_thinc::Waypoint_Navigator::Request, ardrone_thinc::Waypoint_Navigator::Response);
 };
 
 #endif

@@ -29,6 +29,4 @@ rosbuild_gensrv()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(thinc_main src/main.cpp src/ArdroneThinc.cpp)
-rosbuild_add_executable(waypoint_navigator_server src/Waypoint_Navigator_Server.cpp)
-rosbuild_add_executable(waypoint_navigator_client src/Waypoint_Navigator_Client.cpp)
+rosbuild_add_executable(thinc_main src/main.cpp src/ArdroneThinc.cpp src/drone.cpp)

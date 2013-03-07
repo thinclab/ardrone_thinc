@@ -5,7 +5,7 @@
 #include "drone.hpp"
 
 /*
- * Constructor for a drone. The drone goes by "name" 
+ * Constructor for a drone. The drone has id n 
  * and has initial grid position (x,y).
  */
 drone::drone(int n, int x, int y) {

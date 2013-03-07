@@ -6,15 +6,15 @@ import struct
 
 
 class Waypoint_NavigatorRequest(genpy.Message):
-  _md5sum = "1ff823f40041a8e85b331f2b7a4768d1"
+  _md5sum = "61b9afd99a32a533765363ee1b25b39f"
   _type = "ardrone_thinc/Waypoint_NavigatorRequest"
   _has_header = False #flag to mark the presence of a Header object
-  _full_text = """int64 drone_id
+  _full_text = """int64 id
 int64 x
 int64 y
 
 """
-  __slots__ = ['drone_id','x','y']
+  __slots__ = ['id','x','y']
   _slot_types = ['int64','int64','int64']
 
   def __init__(self, *args, **kwds):
@@ -25,7 +25,7 @@ int64 y
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       drone_id,x,y
+       id,x,y
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -34,14 +34,14 @@ int64 y
     if args or kwds:
       super(Waypoint_NavigatorRequest, self).__init__(*args, **kwds)
       #message fields cannot be None, assign default values for those that are
-      if self.drone_id is None:
-        self.drone_id = 0
+      if self.id is None:
+        self.id = 0
       if self.x is None:
         self.x = 0
       if self.y is None:
         self.y = 0
     else:
-      self.drone_id = 0
+      self.id = 0
       self.x = 0
       self.y = 0
 
@@ -58,7 +58,7 @@ int64 y
     """
     try:
       _x = self
-      buff.write(_struct_3q.pack(_x.drone_id, _x.x, _x.y))
+      buff.write(_struct_3q.pack(_x.id, _x.x, _x.y))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -72,7 +72,7 @@ int64 y
       _x = self
       start = end
       end += 24
-      (_x.drone_id, _x.x, _x.y,) = _struct_3q.unpack(str[start:end])
+      (_x.id, _x.x, _x.y,) = _struct_3q.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -86,7 +86,7 @@ int64 y
     """
     try:
       _x = self
-      buff.write(_struct_3q.pack(_x.drone_id, _x.x, _x.y))
+      buff.write(_struct_3q.pack(_x.id, _x.x, _x.y))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -101,7 +101,7 @@ int64 y
       _x = self
       start = end
       end += 24
-      (_x.drone_id, _x.x, _x.y,) = _struct_3q.unpack(str[start:end])
+      (_x.id, _x.x, _x.y,) = _struct_3q.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -209,6 +209,6 @@ _struct_I = genpy.struct_I
 _struct_q = struct.Struct("<q")
 class Waypoint_Navigator(object):
   _type          = 'ardrone_thinc/Waypoint_Navigator'
-  _md5sum = 'fb801f96553397ac6b3bf482c43d824d'
+  _md5sum = '243c350f39465760c0a4490095f0ea65'
   _request_class  = Waypoint_NavigatorRequest
   _response_class = Waypoint_NavigatorResponse

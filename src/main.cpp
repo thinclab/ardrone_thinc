@@ -24,27 +24,34 @@
 using namespace cv;
 using namespace std;
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     // ros init
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
+   
+    if (argc < 3) {
+        cout << "Arguments should include the following: number of columns, number of rows, then proceed in triples of drone id number, x coordinate, and y coordinate." << endl; 
+        exit(0); 
+    }
 
-    ArdroneThinc at;
-    
     //first two arguments are columns and rows, respectively.
     int c, r;
-    c = atoi(argv[0]); 
-    r = atoi(argv[1]); 
+    c = atoi(argv[1]); 
+    r = atoi(argv[2]); 
+
+    ArdroneThinc at; 
+    at.columns = c; 
+    at.rows = r;
 
     //after columns and rows, arguments proceed as follows: 
     //drone name, spawn x position, spawn y position, and
     //repeat n times for n drones
-    for (int i = 0; i < (argc-2)/3; i++) {
-        int x, y, id;
-        string id_string = argv[2 + 3*i];
-        string x_string = argv[3 + 3*i];
-        string y_string = argv[4 + 3*i];
+    for (int i = 0; i < (argc-3)/3; i++) {
+        int id, x, y;
+        string id_string = argv[3 + 3*i];
+        string x_string = argv[4 + 3*i];
+        string y_string = argv[5 + 3*i];
 
         id = atoi(id_string.c_str()); 
         x = atoi(x_string.c_str()); 
@@ -54,34 +61,34 @@ int main(int argc, char **argv) {
         at.drones.push_back(d);
 
         //advertise
-        at.launch_publishers[i] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "ardrone/takeoff", 5); 
-        at.land_publishers[i] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "ardrone/land", 5);
-        at.reset_publishers[i] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "ardrone/reset", 5);
-        at.twist_publishers[i] = n.advertise<geometry_msgs::Twist>
-            ("drone" + id_string + "cmd_vel", 10);
-        at.thresh_publishers[i] = n.advertise<sensor_msgs::Image>
-            ("drone" + id_string + "thinc/thresh", 10);
-        at.cam_subscribers[i] = n.subscribe<sensor_msgs::Image>
+        at.launch_publishers.push_back(n.advertise<std_msgs::Empty> 
+            ("drone" + id_string + "ardrone/takeoff", 5)); 
+        at.land_publishers.push_back(n.advertise<std_msgs::Empty>
+            ("drone" + id_string + "ardrone/land", 5));
+        at.reset_publishers.push_back(n.advertise<std_msgs::Empty>
+            ("drone" + id_string + "ardrone/reset", 5));
+        at.twist_publishers.push_back(n.advertise<geometry_msgs::Twist>
+            ("drone" + id_string + "cmd_vel", 10));
+        at.thresh_publishers.push_back(n.advertise<sensor_msgs::Image>
+            ("drone" + id_string + "thinc/thresh", 10));
+        at.cam_subscribers.push_back(n.subscribe<sensor_msgs::Image>
             ("drone" + id_string + "ardrone/image_raw", 1,
-            &ArdroneThinc::CamCallback, &at);
-        at.camchannel_clients[i] = n.serviceClient<ardrone_autonomy::CamSelect>
-            ("drone" + id_string + "ardrone/setcamchannel");
-        at.flattrim_clients[i] = n.serviceClient<std_srvs::Empty>
-            ("drone" + id_string + "ardrone/flattrim");
-
+            &ArdroneThinc::CamCallback, &at));
+        at.camchannel_clients.push_back(n.serviceClient
+            <ardrone_autonomy::CamSelect>
+            ("drone" + id_string + "ardrone/setcamchannel"));
+        at.flattrim_clients.push_back(n.serviceClient<std_srvs::Empty>
+            ("drone" + id_string + "ardrone/flattrim"));
     }
 
-    at.waypoint_navigator_service = n.advertiseService("waypoint_navigator_server", &ArdroneThinc::move, &at);
+    at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
 
-    at.waypoint_navigator_client = n.serviceClient<ardrone_thinc::Waypoint_Navigator>("waypoint_navigator_service"); 
+//    at.waypoint_navigator_client = n.serviceClient<ardrone_thinc::Waypoint_Navigator>("Waypoint_Navigator"); 
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();
 
-    int drone_id = 0; //which drone we want to move
+    //int drone_id = 0; //which drone we want to move
                       //we will ultimately receive this
                       //value from the keyboard or pomdp
 
@@ -90,17 +97,20 @@ int main(int argc, char **argv) {
         // set camera to bottom
         ardrone_autonomy::CamSelect camsrv;
         camsrv.request.channel = 1;
-        at.camchannel_clients[drone_id].call(camsrv);
+        at.camchannel_clients[0].call(camsrv);
+        at.camchannel_clients[1].call(camsrv); 
 
         // calibrate to flat surface
         std_srvs::Empty trimsrv;
-        at.flattrim_clients[drone_id].call(trimsrv);
+        at.flattrim_clients[0].call(trimsrv);
+        at.flattrim_clients[1].call(trimsrv); 
 
         // hover initially
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
-        //at.launch_publishers[drone_id].publish(at.empty_msg);
+        at.launch_publishers[0].publish(at.empty_msg);
+        at.launch_publishers[1].publish(at.empty_msg); 
     } 
     
     // hover drone in place

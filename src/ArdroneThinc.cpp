@@ -46,7 +46,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     }
 
     // convert opencv image to ros image and publish
-    thresh.publish(orig->toImageMsg());
+    //thresh.publish(orig->toImageMsg()); //giving error?
     
     // center drone
     //if(xp > UB) twist_msg.linear.y = -VEL;
@@ -58,8 +58,110 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //twist.publish(twist_msg);
 }
 
-bool move(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res) {
-    //check for valid grid cell & look for drone, then move   
+/*
+ * Callback function of the Waypoint_Navigator Service.
+ * Determines how much to move and calls move()
+ * accordingly. Returns true if successfuly, otherwise
+ * false.
+ */
+bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res) {
+    
+    drone* d = drones[req.id]; 
+    
+    if (is_valid_grid_cell(req.x, req.y)) {
+        if (d != NULL) {
+            bool move_right = false;
+            bool move_left = false;
+            bool move_up = false;
+            bool move_down = false;
+
+            int delta_x = d->grid_pos[0] - req.x;
+            int delta_y = d->grid_pos[1] - req.y;
+
+            if (delta_x < 0)
+                move_right = true;
+            else if (delta_x > 0)
+                move_left = true;
+            if (delta_y < 0)
+                move_up = true;
+            else if (delta_y > 0)
+                move_down = true;
+
+            int x_moves = abs(delta_x);
+            int y_moves = abs(delta_y);
+
+            while (ros::ok() && (x_moves > 0 || y_moves > 0)) {
+                //complete all moves in x-direction first
+                if (x_moves > 0) {
+                    if (move_right) 
+                        move(req.id, 'r'); 
+                    else if (move_left) 
+                        move(req.id, 'l'); 
+                    x_moves--; 
+                }
+
+                //complete all moves in y-direction second
+                else if (y_moves > 0) {
+                    if (move_up) 
+                        move(req.id, 'u');               
+                    else if (move_down) 
+                        move(req.id, 'd'); 
+                    y_moves--; 
+                } 
+            }    
+        }
+    }
+
+    return false;
+}
+
+/*
+ * Move the drone with the given id one cell in the 
+ * direction indicated- 'r' = right, 'l' = left, 
+ * 'u' = up, and 'd' = down.
+ */
+bool ArdroneThinc::move(int id, char direction) {
+
+    /* -linear.x: move backward
+     * +linear.x: move forward
+     * -linear.y: move right
+     * +linear.y: move left
+     */
+
+    switch(direction) {
+        case 'l': 
+            twist_msg.linear.y = 0.25; 
+            break; 
+        case 'r': 
+            twist_msg.linear.y = -0.25; 
+            break; 
+        case 'u': 
+            twist_msg.linear.x = 0.25; 
+            break; 
+        case 'd': 
+            twist_msg.linear.x = -0.25; 
+            break; 
+        default: 
+            return false; 
+    }
+
+    twist_publishers[id].publish(twist_msg); 
+    ros::Duration(1000.0).sleep(); 
+
+    twist_msg.linear.x = 0; //reset values of twist after we move
+    twist_msg.linear.y = 0; 
+    twist_msg.linear.z = 0; 
+    return true; 
+}
+
+/*
+ * Determine if the given grid cell (x,y) is valid.
+ * Return true if it is, otherwise return false.
+ */
+bool ArdroneThinc::is_valid_grid_cell(int x, int y) {
+    if (x < 0 || y < 0 || x > columns || y > rows)
+        return false;
+
     return true;
 }
 
