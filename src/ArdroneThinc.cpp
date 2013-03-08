@@ -108,10 +108,14 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
                         move(req.id, 'd'); 
                     y_moves--; 
                 } 
-            }    
+            }   
+            res.success = true;  
         }
+        else
+            res.success = false; 
     }
-
+    res.success = false; 
+    
     return false;
 }
 
@@ -128,25 +132,31 @@ bool ArdroneThinc::move(int id, char direction) {
      * +linear.y: move left
      */
 
+    drone* d = drones[id];
+
     switch(direction) {
         case 'l': 
             twist_msg.linear.y = 0.25; 
+            d->grid_pos[0]--; 
             break; 
         case 'r': 
             twist_msg.linear.y = -0.25; 
+            d->grid_pos[0]++;
             break; 
         case 'u': 
             twist_msg.linear.x = 0.25; 
+            d->grid_pos[1]++;
             break; 
         case 'd': 
             twist_msg.linear.x = -0.25; 
+            d->grid_pos[1]--;
             break; 
         default: 
             return false; 
     }
 
     twist_publishers[id].publish(twist_msg); 
-    ros::Duration(1000.0).sleep(); 
+    ros::Duration(100.0).sleep(); 
 
     twist_msg.linear.x = 0; //reset values of twist after we move
     twist_msg.linear.y = 0; 

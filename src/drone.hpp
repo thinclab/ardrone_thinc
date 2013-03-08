@@ -9,9 +9,6 @@ using namespace std;
 class drone {
     public: 
         drone(int, int, int); 
-        void advertise(void);
-        void move_on_grid(int, int);
-        void move_absolute(double, double, double);
         int id; 
         int grid_pos[2]; 
         double abs_pos[3]; 

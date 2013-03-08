@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     int c, r;
     c = atoi(argv[1]); 
     r = atoi(argv[2]); 
-
+    
     ArdroneThinc at; 
     at.columns = c; 
     at.rows = r;
@@ -61,24 +61,36 @@ int main(int argc, char *argv[]) {
         at.drones.push_back(d);
 
         //advertise
-        at.launch_publishers.push_back(n.advertise<std_msgs::Empty> 
-            ("drone" + id_string + "ardrone/takeoff", 5)); 
-        at.land_publishers.push_back(n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "ardrone/land", 5));
-        at.reset_publishers.push_back(n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "ardrone/reset", 5));
-        at.twist_publishers.push_back(n.advertise<geometry_msgs::Twist>
-            ("drone" + id_string + "cmd_vel", 10));
-        at.thresh_publishers.push_back(n.advertise<sensor_msgs::Image>
-            ("drone" + id_string + "thinc/thresh", 10));
-        at.cam_subscribers.push_back(n.subscribe<sensor_msgs::Image>
-            ("drone" + id_string + "ardrone/image_raw", 1,
-            &ArdroneThinc::CamCallback, &at));
-        at.camchannel_clients.push_back(n.serviceClient
+        ros::Publisher launch, land, reset, twist, thresh;
+        ros::Subscriber cam; 
+        ros::ServiceClient camchannel, flattrim; 
+        at.launch_publishers.push_back(launch); 
+        at.land_publishers.push_back(land); 
+        at.reset_publishers.push_back(reset); 
+        at.twist_publishers.push_back(twist); 
+        at.thresh_publishers.push_back(thresh); 
+        at.cam_subscribers.push_back(cam); 
+        at.camchannel_clients.push_back(camchannel); 
+        at.flattrim_clients.push_back(flattrim); 
+
+        at.launch_publishers[id] = n.advertise<std_msgs::Empty> 
+            ("drone" + id_string + "/ardrone/takeoff", 5); 
+        at.land_publishers[id] = n.advertise<std_msgs::Empty>
+            ("drone" + id_string + "/ardrone/land", 5);
+        at.reset_publishers[id] = n.advertise<std_msgs::Empty>
+            ("drone" + id_string + "/ardrone/reset", 5);
+        at.twist_publishers[id] = n.advertise<geometry_msgs::Twist>
+            ("drone" + id_string + "/cmd_vel", 10);
+        at.thresh_publishers[id] = n.advertise<sensor_msgs::Image>
+            ("drone" + id_string + "/thinc/thresh", 10);
+        at.cam_subscribers[id] = n.subscribe<sensor_msgs::Image>
+            ("drone" + id_string + "/ardrone/image_raw", 1,
+            &ArdroneThinc::CamCallback, &at);
+        at.camchannel_clients[id] = n.serviceClient
             <ardrone_autonomy::CamSelect>
-            ("drone" + id_string + "ardrone/setcamchannel"));
-        at.flattrim_clients.push_back(n.serviceClient<std_srvs::Empty>
-            ("drone" + id_string + "ardrone/flattrim"));
+            ("drone" + id_string + "/ardrone/setcamchannel");
+        at.flattrim_clients[id] = n.serviceClient<std_srvs::Empty>
+            ("drone" + id_string + "/ardrone/flattrim");
     }
 
     at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
@@ -109,6 +121,7 @@ int main(int argc, char *argv[]) {
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
+        cout << "taking off..." << endl; 
         at.launch_publishers[0].publish(at.empty_msg);
         at.launch_publishers[1].publish(at.empty_msg); 
     } 
