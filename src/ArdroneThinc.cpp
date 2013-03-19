@@ -65,7 +65,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
  * false.
  */
 bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res) {
-    
+ 
     drone* d = drones[req.id]; 
     
     if (is_valid_grid_cell(req.x, req.y)) {
@@ -78,7 +78,7 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
             int delta_x = d->grid_pos[0] - req.x;
             int delta_y = d->grid_pos[1] - req.y;
 
-            if (delta_x < 0)
+            if (delta_x < 0) 
                 move_right = true;
             else if (delta_x > 0)
                 move_left = true;
@@ -90,33 +90,37 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
             int x_moves = abs(delta_x);
             int y_moves = abs(delta_y);
 
+            bool success = false; 
+
             while (ros::ok() && (x_moves > 0 || y_moves > 0)) {
                 //complete all moves in x-direction first
                 if (x_moves > 0) {
                     if (move_right) 
-                        move(req.id, 'r'); 
-                    else if (move_left) 
-                        move(req.id, 'l'); 
+                        success = move(req.id, 'r'); 
+                    else if (move_left)
+                        success = move(req.id, 'l'); 
                     x_moves--; 
                 }
 
                 //complete all moves in y-direction second
                 else if (y_moves > 0) {
-                    if (move_up) 
-                        move(req.id, 'u');               
-                    else if (move_down) 
-                        move(req.id, 'd'); 
+                    if (move_up)
+                        success = move(req.id, 'u');               
+                    else if (move_down)
+                        success = move(req.id, 'd'); 
                     y_moves--; 
                 } 
+                if (!success)
+                    cout << "Something went wrong with that move." << endl; 
             }   
             res.success = true;  
         }
         else
             res.success = false; 
     }
-    res.success = false; 
-    
-    return false;
+    else
+        res.success = false; 
+    cout << "done with callback" << endl; 
 }
 
 /*
@@ -132,6 +136,7 @@ bool ArdroneThinc::move(int id, char direction) {
      * +linear.y: move left
      */
 
+    cout << "in move" << endl; 
     drone* d = drones[id];
 
     switch(direction) {
@@ -152,15 +157,19 @@ bool ArdroneThinc::move(int id, char direction) {
             d->grid_pos[1]--;
             break; 
         default: 
+            cout << "default direction -- return from function" << endl; 
             return false; 
     }
 
     twist_publishers[id].publish(twist_msg); 
-    ros::Duration(100.0).sleep(); 
+    ros::Duration(2).sleep(); //sleep for 2 seconds
 
     twist_msg.linear.x = 0; //reset values of twist after we move
     twist_msg.linear.y = 0; 
     twist_msg.linear.z = 0; 
+    twist_publishers[id].publish(twist_msg);
+    ros::Duration(1).sleep(); //sleep for a second
+    cout << "twist values reset... returning..." << endl; 
     return true; 
 }
 
