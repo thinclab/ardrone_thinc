@@ -31,12 +31,11 @@ class ArdroneThinc {
         int rows; 
 
         void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
-        bool Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res);
+        bool Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request 
+            &req, ardrone_thinc::Waypoint_Navigator::Response &res);
         bool is_valid_grid_cell(int, int); 
-        bool move(int, char); 
+        void move(int, char); 
        
-
-
 };
 
 #endif

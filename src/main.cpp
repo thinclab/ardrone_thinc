@@ -25,7 +25,6 @@ using namespace cv;
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    // ros init
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
@@ -46,7 +45,7 @@ int main(int argc, char *argv[]) {
 
     //after columns and rows, arguments proceed as follows: 
     //drone name, spawn x position, spawn y position, and
-    //repeat n times for n drones
+    //repeat for n drones
     for (int i = 0; i < (argc-3)/3; i++) {
         int id, x, y;
         string id_string = argv[3 + 3*i];
@@ -60,7 +59,7 @@ int main(int argc, char *argv[]) {
         drone* d = new drone(id, x, y);
         at.drones.push_back(d);
 
-        //advertise
+        //push publishers into vectors
         ros::Publisher launch, land, reset, twist, thresh;
         ros::Subscriber cam; 
         ros::ServiceClient camchannel, flattrim; 
@@ -73,6 +72,7 @@ int main(int argc, char *argv[]) {
         at.camchannel_clients.push_back(camchannel); 
         at.flattrim_clients.push_back(flattrim); 
 
+        //advertise
         at.launch_publishers[id] = n.advertise<std_msgs::Empty> 
             ("drone" + id_string + "/ardrone/takeoff", 5); 
         at.land_publishers[id] = n.advertise<std_msgs::Empty>
@@ -95,16 +95,11 @@ int main(int argc, char *argv[]) {
 
     at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
 
-//    at.waypoint_navigator_client = n.serviceClient<ardrone_thinc::Waypoint_Navigator>("Waypoint_Navigator"); 
-
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();
 
-    //int drone_id = 0; //which drone we want to move
-                      //we will ultimately receive this
-                      //value from the keyboard or pomdp
-
     // set camchannel on drone and takeoff
+    // ADD ACCESS TO DRONES VECTOR SO TAKEOFF ISN'T HARD-CODED**********
     if(ros::ok()) {
         // set camera to bottom
         ardrone_autonomy::CamSelect camsrv;
@@ -126,7 +121,6 @@ int main(int argc, char *argv[]) {
         at.launch_publishers[1].publish(at.empty_msg); 
     } 
     
-    // hover drone in place
     while(ros::ok()) {
         ros::spinOnce(); // see ArdroneThinc.CamCallback()
         loop_rate.sleep();

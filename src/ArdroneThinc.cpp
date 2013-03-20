@@ -61,66 +61,60 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
 /*
  * Callback function of the Waypoint_Navigator Service.
  * Determines how much to move and calls move()
- * accordingly. Returns true if successfuly, otherwise
+ * accordingly. Returns true if successful, otherwise
  * false.
  */
 bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res) {
  
     drone* d = drones[req.id]; 
     
-    if (is_valid_grid_cell(req.x, req.y)) {
-        if (d != NULL) {
-            bool move_right = false;
-            bool move_left = false;
-            bool move_up = false;
-            bool move_down = false;
-
-            int delta_x = d->grid_pos[0] - req.x;
-            int delta_y = d->grid_pos[1] - req.y;
-
-            if (delta_x < 0) 
-                move_right = true;
-            else if (delta_x > 0)
-                move_left = true;
-            if (delta_y < 0)
-                move_up = true;
-            else if (delta_y > 0)
-                move_down = true;
-
-            int x_moves = abs(delta_x);
-            int y_moves = abs(delta_y);
-
-            bool success = false; 
-
-            while (ros::ok() && (x_moves > 0 || y_moves > 0)) {
-                //complete all moves in x-direction first
-                if (x_moves > 0) {
-                    if (move_right) 
-                        success = move(req.id, 'r'); 
-                    else if (move_left)
-                        success = move(req.id, 'l'); 
-                    x_moves--; 
-                }
-
-                //complete all moves in y-direction second
-                else if (y_moves > 0) {
-                    if (move_up)
-                        success = move(req.id, 'u');               
-                    else if (move_down)
-                        success = move(req.id, 'd'); 
-                    y_moves--; 
-                } 
-                if (!success)
-                    cout << "Something went wrong with that move." << endl; 
-            }   
-            res.success = true;  
-        }
-        else
-            res.success = false; 
-    }
-    else
+    if (!is_valid_grid_cell(req.x, req.y) || d == NULL) {
         res.success = false; 
-    cout << "done with callback" << endl; 
+        return false; 
+    }
+    else {
+
+        bool move_right = false;
+        bool move_left = false;
+        bool move_up = false;
+        bool move_down = false;
+
+        int delta_x = d->grid_pos[0] - req.x;
+        int delta_y = d->grid_pos[1] - req.y;
+
+        if (delta_x < 0) 
+            move_right = true;
+        else if (delta_x > 0)
+            move_left = true;
+        if (delta_y < 0)
+            move_up = true;
+        else if (delta_y > 0)
+            move_down = true;
+
+        int x_moves = abs(delta_x);
+        int y_moves = abs(delta_y);
+
+        while (ros::ok() && (x_moves > 0 || y_moves > 0)) {
+            //complete all moves in x-direction first
+            if (x_moves > 0) {
+                if (move_right) 
+                    move(req.id, 'r'); 
+                else if (move_left)
+                    move(req.id, 'l'); 
+                x_moves--; 
+            }
+            //complete all moves in y-direction second
+            else if (y_moves > 0) {
+                if (move_up)
+                    move(req.id, 'u');               
+                else if (move_down)
+                    move(req.id, 'd'); 
+                y_moves--; 
+            } 
+        }   
+        res.success = true;  
+        return true; 
+    }
 }
 
 /*
@@ -128,7 +122,7 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
  * direction indicated- 'r' = right, 'l' = left, 
  * 'u' = up, and 'd' = down.
  */
-bool ArdroneThinc::move(int id, char direction) {
+void ArdroneThinc::move(int id, char direction) {
 
     /* -linear.x: move backward
      * +linear.x: move forward
@@ -136,7 +130,6 @@ bool ArdroneThinc::move(int id, char direction) {
      * +linear.y: move left
      */
 
-    cout << "in move" << endl; 
     drone* d = drones[id];
 
     switch(direction) {
@@ -157,20 +150,19 @@ bool ArdroneThinc::move(int id, char direction) {
             d->grid_pos[1]--;
             break; 
         default: 
-            cout << "default direction -- return from function" << endl; 
-            return false; 
+            //nothing to do here
+            break;  
     }
 
     twist_publishers[id].publish(twist_msg); 
-    ros::Duration(2).sleep(); //sleep for 2 seconds
+    ros::Duration(2.5).sleep();
 
-    twist_msg.linear.x = 0; //reset values of twist after we move
+    //reset values of twist_msg after we move to hover
+    twist_msg.linear.x = 0; 
     twist_msg.linear.y = 0; 
     twist_msg.linear.z = 0; 
     twist_publishers[id].publish(twist_msg);
-    ros::Duration(1).sleep(); //sleep for a second
-    cout << "twist values reset... returning..." << endl; 
-    return true; 
+    ros::Duration(1).sleep(); 
 }
 
 /*
@@ -186,7 +178,9 @@ bool ArdroneThinc::is_valid_grid_cell(int x, int y) {
 
 
 
-/*
- * Create function to add drones to vector from thinc_main.
- * Give access to number of columns and rows in grid.
- */
+// ADD: Function to add drones to vector from thinc_main.
+
+// ADD: Check expected grid cell color vs. actual cell color
+
+// ADD: Way to handle when we ended up in the wrong cell
+

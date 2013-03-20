@@ -1,5 +1,6 @@
 /*
- * Represents a drone- qualities include position, topics, etc.
+ * Represents a drone- properties include a unique
+ * id number, and grid position.
  */
 
 #include "drone.hpp"
