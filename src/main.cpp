@@ -99,26 +99,23 @@ int main(int argc, char *argv[]) {
     ros::Duration(1.0).sleep();
 
     // set camchannel on drone and takeoff
-    // ADD ACCESS TO DRONES VECTOR SO TAKEOFF ISN'T HARD-CODED**********
     if(ros::ok()) {
         // set camera to bottom
         ardrone_autonomy::CamSelect camsrv;
         camsrv.request.channel = 1;
-        at.camchannel_clients[0].call(camsrv);
-        at.camchannel_clients[1].call(camsrv); 
-
         // calibrate to flat surface
         std_srvs::Empty trimsrv;
-        at.flattrim_clients[0].call(trimsrv);
-        at.flattrim_clients[1].call(trimsrv); 
-
         // hover initially
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
         cout << "taking off..." << endl; 
-        at.launch_publishers[0].publish(at.empty_msg);
-        at.launch_publishers[1].publish(at.empty_msg); 
+        
+        for (int i = 0; i < at.drones.size(); i++) {
+            at.camchannel_clients[i].call(camsrv); 
+            at.flattrim_clients[i].call(trimsrv); 
+            at.launch_publishers[i].publish(at.empty_msg); 
+        }
     } 
     
     while(ros::ok()) {
