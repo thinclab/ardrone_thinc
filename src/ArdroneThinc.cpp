@@ -159,7 +159,7 @@ void ArdroneThinc::move(int id, char direction) {
     }
 
     twist_publishers[id].publish(twist_msg); 
-    ros::Duration(2.5).sleep();
+    ros::Duration(4.1).sleep();
 
     //reset values of twist_msg after we move to hover
     twist_msg.linear.x = 0; 
