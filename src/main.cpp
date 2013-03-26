@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
         //push publishers into vectors
         ros::Publisher launch, land, reset, twist, thresh;
-        ros::Subscriber cam; 
+        ros::Subscriber cam; ros::ServiceServer waypoint; 
         ros::ServiceClient camchannel, flattrim; 
         at.launch_publishers.push_back(launch); 
         at.land_publishers.push_back(land); 
@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
         at.cam_subscribers.push_back(cam); 
         at.camchannel_clients.push_back(camchannel); 
         at.flattrim_clients.push_back(flattrim); 
+        at.waypoint_navigator_services.push_back(waypoint); 
 
         //advertise
         at.launch_publishers[id] = n.advertise<std_msgs::Empty> 
@@ -91,9 +92,12 @@ int main(int argc, char *argv[]) {
             ("drone" + id_string + "/ardrone/setcamchannel");
         at.flattrim_clients[id] = n.serviceClient<std_srvs::Empty>
             ("drone" + id_string + "/ardrone/flattrim");
+        at.waypoint_navigator_services[id] = n.advertiseService
+            ("Waypoint_Navigator_" + id_string, &ArdroneThinc::Waypoint_Navigator_Callback, 
+            &at); 
     }
 
-    at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
+//    at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();

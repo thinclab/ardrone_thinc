@@ -13,8 +13,8 @@ using namespace std;
 
 class ArdroneThinc {
     public:
-        ros::ServiceServer waypoint_navigator_service; 
-        ros::ServiceClient waypoint_navigator_client; 
+        vector<ros::ServiceServer> waypoint_navigator_services; 
+        vector<ros::ServiceClient> waypoint_navigator_clients; 
         vector<ros::Publisher> launch_publishers;
         vector<ros::Publisher> land_publishers;
         vector<ros::Publisher> reset_publishers;
