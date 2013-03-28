@@ -8,6 +8,8 @@
 #include "drone.hpp"
 #include "ardrone_thinc/Waypoint_Navigator.h"
 #include <vector> 
+#include "opencv2/imgproc/imgproc.hpp"
+
 
 using namespace std; 
 
@@ -31,11 +33,14 @@ class ArdroneThinc {
         int rows; 
 
         void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
-        bool Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request 
-            &req, ardrone_thinc::Waypoint_Navigator::Response &res);
+        bool Waypoint_Navigator_Callback(
+            ardrone_thinc::Waypoint_Navigator::Request &req, 
+            ardrone_thinc::Waypoint_Navigator::Response &res);
         bool is_valid_grid_cell(int, int); 
 //        bool is_right_color(int, int, ---color?---); 
         void move(int, char); 
+
+        vector<cv::Vec3f> img_vec; 
        
 };
 

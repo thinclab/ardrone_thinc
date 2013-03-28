@@ -42,6 +42,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
     vector<Vec3f> c;
     HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120);
+    img_vec = c; 
     for(size_t i = 0; i < c.size(); i++) {
         Point center(cvRound(c[i][0]), cvRound(c[i][1]));
         int radius = cvRound(c[i][2]);
@@ -157,16 +158,22 @@ void ArdroneThinc::move(int id, char direction) {
             //nothing to do here
             break;  
     }
-
+ 
     twist_publishers[id].publish(twist_msg); 
-    ros::Duration(4.1).sleep();
 
+    while(!img_vec.empty()) {
+        //seeing the "current" circle -> keep moving
+    }
+    while (img_vec.empty()) {
+        //in between cells -> keep moving
+    }
+    //now we see the "next" circle -> stop.
     //reset values of twist_msg after we move to hover
     twist_msg.linear.x = 0; 
     twist_msg.linear.y = 0; 
     twist_msg.linear.z = 0; 
     twist_publishers[id].publish(twist_msg);
-    ros::Duration(1).sleep(); 
+    ros::Duration(2).sleep(); 
 }
 
 /*

@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
     at.columns = c; 
     at.rows = r;
 
+    ros::AsyncSpinner spinner((argc-3)/3);
     //after columns and rows, arguments proceed as follows: 
     //drone name, spawn x position, spawn y position, and
     //repeat for n drones
@@ -122,10 +123,8 @@ int main(int argc, char *argv[]) {
         }
     } 
     
-    while(ros::ok()) {
-        ros::spinOnce(); // see ArdroneThinc.CamCallback()
-        loop_rate.sleep();
-    }
+    spinner.start();
+    ros::waitForShutdown();
 
     return 0;
 }
