@@ -4,6 +4,7 @@
 #include "std_msgs/Empty.h"
 #include "std_msgs/Header.h"
 #include "geometry_msgs/Twist.h"
+#include "ardrone_autonomy/Navdata.h"
 
 // opencv2
 #include "sensor_msgs/image_encodings.h"
@@ -15,6 +16,11 @@
 // ardrone_thinc
 #include "ArdroneThinc.hpp"
 
+// misc
+#include <cmath>
+
+#define D2R(a) (a*M_PI/180)
+
 using namespace cv;
 using namespace std;
 
@@ -24,6 +30,9 @@ using namespace std;
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
+    // not implemented yet
+    //if(!stabilize) return;
+
     // convert ros image to opencv image
     cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
     cv_bridge::CvImagePtr grey(new cv_bridge::CvImage()); 
@@ -38,12 +47,19 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
     vector<Vec3f> c;
     HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120);
+    Point avg_center; // grab from laptop code
     for(size_t i = 0; i < c.size(); i++) {
         Point center(cvRound(c[i][0]), cvRound(c[i][1]));
         int radius = cvRound(c[i][2]);
+        avg_center += (Point(c[i][0], c[i][1]) - avg_center)*(1.0/(i+1));
         circle(orig->image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
         circle(orig->image, center, radius, Scalar(255, 0, 0), 3, 8, 0);
     }
+
+    double height = sonar/sqrt(1+tan(D2R(rotx))*tan(D2R(rotx))+tan(D2R(roty))*tan(D2R(roty)));
+    Point over(height*sin(D2R(rotx)), height*sin(D2R(roty)));
+    cout << "height: " << height << endl;
+    cout << "over: " << over << endl;
 
     // convert opencv image to ros image and publish
     //thresh.publish(orig->toImageMsg()); //giving error?
@@ -56,6 +72,13 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //else if(yp < LB) twist_msg.linear.x = VEL;
     //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
     //twist.publish(twist_msg);
+}
+
+
+void ArdroneThinc::NavdataCallback(const ardrone_autonomy::NavdataConstPtr& nav) {
+    rotx = nav->rotX;
+    roty = nav->rotY;
+    sonar = nav->altd;
 }
 
 /*

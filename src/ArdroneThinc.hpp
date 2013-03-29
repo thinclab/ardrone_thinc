@@ -6,6 +6,7 @@
 #include "std_msgs/Empty.h"
 #include "geometry_msgs/Twist.h"
 #include "drone.hpp"
+#include "ardrone_autonomy/Navdata.h"
 #include "ardrone_thinc/Waypoint_Navigator.h"
 #include <vector> 
 
@@ -21,6 +22,7 @@ class ArdroneThinc {
         vector<ros::Publisher> twist_publishers;
         vector<ros::Publisher> thresh_publishers;
         vector<ros::Subscriber> cam_subscribers;
+        vector<ros::Subscriber> navdata_subscribers;
         vector<ros::ServiceClient> camchannel_clients;
         vector<ros::ServiceClient> flattrim_clients;
 
@@ -30,9 +32,19 @@ class ArdroneThinc {
         int columns; 
         int rows; 
 
+        // navdata readings
+        double rotx, roty;
+        int sonar;
+
+        // subscriber callbacks
         void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
+        void NavdataCallback(const ardrone_autonomy::NavdataConstPtr& nav);
+
+        // service callback
         bool Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request 
             &req, ardrone_thinc::Waypoint_Navigator::Response &res);
+
+        // helper functions
         bool is_valid_grid_cell(int, int); 
         void move(int, char); 
        
