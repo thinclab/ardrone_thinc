@@ -27,6 +27,10 @@ using namespace std;
 #define VEL 0.05
 #define LB 0.2
 #define UB 0.8
+/*
+#define COL1 <<something>> // one of the grid colors
+#define COL2 <<something>> // the other grid color
+*/
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
@@ -48,6 +52,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     vector<Vec3f> c;
     HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120);
     Point avg_center; // grab from laptop code
+    img_vec = c; 
     for(size_t i = 0; i < c.size(); i++) {
         Point center(cvRound(c[i][0]), cvRound(c[i][1]));
         int radius = cvRound(c[i][2]);
@@ -176,16 +181,22 @@ void ArdroneThinc::move(int id, char direction) {
             //nothing to do here
             break;  
     }
-
+ 
     twist_publishers[id].publish(twist_msg); 
-    ros::Duration(2.5).sleep();
 
+    while(!img_vec.empty()) {
+        //seeing the "current" circle -> keep moving
+    }
+    while (img_vec.empty()) {
+        //in between cells -> keep moving
+    }
+    //now we see the "next" circle -> stop.
     //reset values of twist_msg after we move to hover
     twist_msg.linear.x = 0; 
     twist_msg.linear.y = 0; 
     twist_msg.linear.z = 0; 
     twist_publishers[id].publish(twist_msg);
-    ros::Duration(1).sleep(); 
+    ros::Duration(2).sleep(); 
 }
 
 /*
@@ -199,11 +210,28 @@ bool ArdroneThinc::is_valid_grid_cell(int x, int y) {
     return true;
 }
 
+/*
+ * Determine if the color of the grid cell we are over
+ * is the color we expect it to be. Return true if it
+ * is correct, false otherwise.
+ */
+/*bool ArdroneThinc::is_right_color(int x, int y) {
+    // to do: once move has stopped and is hovering, call this 
+    // function. 
 
+    // calculate the color of the cell we should be seeing based 
+    // on how we set the color in the png generation file.
+    if ((x%2 == 0 && y%2 == 0) || (x%2 == 1 && y%2 == 1))
+        //expected color is COL1
+    else
+        //expected color is COL2
 
-// ADD: Function to add drones to vector from thinc_main.
+    // query the camera and determine the color we have
 
-// ADD: Check expected grid cell color vs. actual cell color
+    // compare the colors with some tested range of values
+}*/
+
 
 // ADD: Way to handle when we ended up in the wrong cell
+
 

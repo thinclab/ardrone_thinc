@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     at.columns = c; 
     at.rows = r;
 
+    ros::AsyncSpinner spinner((argc-3)/3);
     //after columns and rows, arguments proceed as follows: 
     //drone name, spawn x position, spawn y position, and
     //repeat for n drones
@@ -63,6 +64,7 @@ int main(int argc, char *argv[]) {
         //push publishers into vectors
         ros::Publisher launch, land, reset, twist, thresh;
         ros::Subscriber cam, navdata; 
+        ros::ServiceServer waypoint;
         ros::ServiceClient camchannel, flattrim; 
         at.launch_publishers.push_back(launch); 
         at.land_publishers.push_back(land); 
@@ -73,6 +75,7 @@ int main(int argc, char *argv[]) {
         at.navdata_subscribers.push_back(navdata);
         at.camchannel_clients.push_back(camchannel); 
         at.flattrim_clients.push_back(flattrim); 
+        at.waypoint_navigator_services.push_back(waypoint); 
 
         //advertise
         at.launch_publishers[id] = n.advertise<std_msgs::Empty> 
@@ -96,40 +99,38 @@ int main(int argc, char *argv[]) {
             ("drone" + id_string + "/ardrone/setcamchannel");
         at.flattrim_clients[id] = n.serviceClient<std_srvs::Empty>
             ("drone" + id_string + "/ardrone/flattrim");
+        at.waypoint_navigator_services[id] = n.advertiseService
+            ("Waypoint_Navigator_" + id_string, &ArdroneThinc::Waypoint_Navigator_Callback, 
+            &at); 
     }
 
-    at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
+//    at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();
 
     // set camchannel on drone and takeoff
-    // ADD ACCESS TO DRONES VECTOR SO TAKEOFF ISN'T HARD-CODED**********
     if(ros::ok()) {
         // set camera to bottom
         ardrone_autonomy::CamSelect camsrv;
         camsrv.request.channel = 1;
-        at.camchannel_clients[0].call(camsrv);
-        at.camchannel_clients[1].call(camsrv); 
-
         // calibrate to flat surface
         std_srvs::Empty trimsrv;
-        at.flattrim_clients[0].call(trimsrv);
-        at.flattrim_clients[1].call(trimsrv); 
-
         // hover initially
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
         cout << "taking off..." << endl; 
-        at.launch_publishers[0].publish(at.empty_msg);
-        at.launch_publishers[1].publish(at.empty_msg); 
+        
+        for (int i = 0; i < at.drones.size(); i++) {
+            at.camchannel_clients[i].call(camsrv); 
+            at.flattrim_clients[i].call(trimsrv); 
+            at.launch_publishers[i].publish(at.empty_msg); 
+        }
     } 
     
-    while(ros::ok()) {
-        ros::spinOnce(); // see ArdroneThinc.CamCallback()
-        loop_rate.sleep();
-    }
+    spinner.start();
+    ros::waitForShutdown();
 
     return 0;
 }

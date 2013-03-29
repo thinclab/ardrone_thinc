@@ -9,13 +9,15 @@
 #include "ardrone_autonomy/Navdata.h"
 #include "ardrone_thinc/Waypoint_Navigator.h"
 #include <vector> 
+#include "opencv2/imgproc/imgproc.hpp"
+
 
 using namespace std; 
 
 class ArdroneThinc {
     public:
-        ros::ServiceServer waypoint_navigator_service; 
-        ros::ServiceClient waypoint_navigator_client; 
+        vector<ros::ServiceServer> waypoint_navigator_services; 
+        vector<ros::ServiceClient> waypoint_navigator_clients; 
         vector<ros::Publisher> launch_publishers;
         vector<ros::Publisher> land_publishers;
         vector<ros::Publisher> reset_publishers;
@@ -40,13 +42,16 @@ class ArdroneThinc {
         void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
         void NavdataCallback(const ardrone_autonomy::NavdataConstPtr& nav);
 
-        // service callback
-        bool Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request 
-            &req, ardrone_thinc::Waypoint_Navigator::Response &res);
+        bool Waypoint_Navigator_Callback(
+            ardrone_thinc::Waypoint_Navigator::Request &req, 
+            ardrone_thinc::Waypoint_Navigator::Response &res);
 
         // helper functions
         bool is_valid_grid_cell(int, int); 
+        //bool is_right_color(int, int, ---color?---); 
         void move(int, char); 
+
+        vector<cv::Vec3f> img_vec; 
        
 };
 
