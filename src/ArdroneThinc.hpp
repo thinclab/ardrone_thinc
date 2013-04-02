@@ -31,8 +31,11 @@ class ArdroneThinc {
         vector<drone*> drones; 
         int columns; 
         int rows; 
+        int x_scale;
+        int y_scale; 
 
-        void CamCallback(const sensor_msgs::ImageConstPtr& rosimg);
+        void CamCallback0(const sensor_msgs::ImageConstPtr& rosimg);
+        void CamCallback1(const sensor_msgs::ImageConstPtr& rosimg); 
         bool Waypoint_Navigator_Callback(
             ardrone_thinc::Waypoint_Navigator::Request &req, 
             ardrone_thinc::Waypoint_Navigator::Response &res);
@@ -40,7 +43,8 @@ class ArdroneThinc {
 //        bool is_right_color(int, int, ---color?---); 
         void move(int, char); 
 
-        vector<cv::Vec3f> img_vec; 
+        vector<cv::Vec3f> img_vec_0; 
+        vector<cv::Vec3f> img_vec_1; 
        
 };
 

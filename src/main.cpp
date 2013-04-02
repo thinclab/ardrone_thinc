@@ -29,29 +29,46 @@ int main(int argc, char *argv[]) {
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
    
-    if (argc < 3) {
+/*    if (argc < 3) {
         cout << "Arguments should include the following: number of columns, number of rows, then proceed in triples of drone id number, x coordinate, and y coordinate." << endl; 
         exit(0); 
+    }*/
+    if (argc < 5) {
+        cout << "Arguments should include the following: number of columns, number of rows, x scale, y scale, then proceed in triples of drone id number, x coordinate, and y coordinate." << endl;
+        exit(0);
     }
 
     //first two arguments are columns and rows, respectively.
     int c, r;
+    int x_w, y_w; 
     c = atoi(argv[1]); 
     r = atoi(argv[2]); 
+    x_w = atoi(argv[3]); 
+    y_w = atoi(argv[4]);
     
     ArdroneThinc at; 
     at.columns = c; 
     at.rows = r;
+    at.x_scale = x_w; 
+    at.y_scale = y_w; 
 
-    ros::AsyncSpinner spinner((argc-3)/3);
+//    ros::AsyncSpinner spinner((argc-3)/3);
+    ros::AsyncSpinner spinner((argc-5)/3); 
+
     //after columns and rows, arguments proceed as follows: 
     //drone name, spawn x position, spawn y position, and
     //repeat for n drones
-    for (int i = 0; i < (argc-3)/3; i++) {
+//    for (int i = 0; i < (argc-3)/3; i++) {
+    for (int i = 0; i < (argc-5)/3; i++) {
         int id, x, y;
-        string id_string = argv[3 + 3*i];
+/*        string id_string = argv[3 + 3*i];
         string x_string = argv[4 + 3*i];
-        string y_string = argv[5 + 3*i];
+        string y_string = argv[5 + 3*i];*/
+
+        string id_string = argv[5 + 3*i];
+        string x_string = argv[6 + 3*i];
+        string y_string = argv[7 + 3*i];
+
 
         id = atoi(id_string.c_str()); 
         x = atoi(x_string.c_str()); 
@@ -85,20 +102,22 @@ int main(int argc, char *argv[]) {
             ("drone" + id_string + "/cmd_vel", 10);
         at.thresh_publishers[id] = n.advertise<sensor_msgs::Image>
             ("drone" + id_string + "/thinc/thresh", 10);
-        at.cam_subscribers[id] = n.subscribe<sensor_msgs::Image>
-            ("drone" + id_string + "/ardrone/image_raw", 1,
-            &ArdroneThinc::CamCallback, &at);
         at.camchannel_clients[id] = n.serviceClient
             <ardrone_autonomy::CamSelect>
             ("drone" + id_string + "/ardrone/setcamchannel");
         at.flattrim_clients[id] = n.serviceClient<std_srvs::Empty>
             ("drone" + id_string + "/ardrone/flattrim");
         at.waypoint_navigator_services[id] = n.advertiseService
-            ("Waypoint_Navigator_" + id_string, &ArdroneThinc::Waypoint_Navigator_Callback, 
-            &at); 
+            ("Waypoint_Navigator_" + id_string, 
+            &ArdroneThinc::Waypoint_Navigator_Callback, &at);  
     }
 
-//    at.waypoint_navigator_service = n.advertiseService("Waypoint_Navigator", &ArdroneThinc::Waypoint_Navigator_Callback, &at);
+    at.cam_subscribers[0] = n.subscribe<sensor_msgs::Image>
+        ("drone0/ardrone/bottom/ardrone/bottom/image_raw", 1,
+        &ArdroneThinc::CamCallback0, &at);
+    at.cam_subscribers[1] = n.subscribe<sensor_msgs::Image>
+        ("drone1/ardrone/bottom/ardrone/bottom/image_raw", 1, 
+        &ArdroneThinc::CamCallback1, &at); 
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();

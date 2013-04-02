@@ -27,7 +27,7 @@ using namespace std;
 */
 
 // threshold images and adjust drone position accordingly
-void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
+void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
     // convert ros image to opencv image
     cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
     cv_bridge::CvImagePtr grey(new cv_bridge::CvImage()); 
@@ -41,8 +41,8 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
     GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
     vector<Vec3f> c;
-    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120);
-    img_vec = c; 
+    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120); //220 120
+    img_vec_0 = c; 
     for(size_t i = 0; i < c.size(); i++) {
         Point center(cvRound(c[i][0]), cvRound(c[i][1]));
         int radius = cvRound(c[i][2]);
@@ -62,6 +62,43 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
     //twist.publish(twist_msg);
 }
+
+void ArdroneThinc::CamCallback1(const sensor_msgs::ImageConstPtr& rosimg) {
+    // convert ros image to opencv image
+    cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
+    cv_bridge::CvImagePtr grey(new cv_bridge::CvImage());
+
+    // resize image (faster processing);
+    int new_h = orig->image.size.p[0];
+    int new_w = (new_h*orig->image.size.p[1])/orig->image.size.p[0];
+    resize(orig->image, orig->image, Size(new_w, new_h), 0, 0);
+
+    // detect circles using hough transform
+    cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
+    GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
+    vector<Vec3f> c;
+    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120); //220 120
+    img_vec_1 = c;
+    for(size_t i = 0; i < c.size(); i++) {
+        Point center(cvRound(c[i][0]), cvRound(c[i][1]));
+        int radius = cvRound(c[i][2]);
+        circle(orig->image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+        circle(orig->image, center, radius, Scalar(255, 0, 0), 3, 8, 0);
+    }
+
+    // convert opencv image to ros image and publish
+    //thresh.publish(orig->toImageMsg()); //giving error?
+
+    // center drone
+    //if(xp > UB) twist_msg.linear.y = -VEL;
+    //else if(xp < LB) twist_msg.linear.y = VEL;
+    //else if(LB < xp && xp < UB) twist_msg.linear.y = 0;
+    //if(yp > UB) twist_msg.linear.x = -VEL;
+    //else if(yp < LB) twist_msg.linear.x = VEL;
+    //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
+    //twist.publish(twist_msg);
+}
+
 
 /*
  * Callback function of the Waypoint_Navigator Service.
@@ -117,6 +154,13 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
                 y_moves--; 
             } 
         }   
+
+/*        twist_msg.linear.x = 0; 
+        twist_msg.linear.y = 0; 
+        twist_msg.linear.z = 0; 
+        twist_publishers[req.id].publish(twist_msg);
+        ros::Duration(2).sleep(); */
+
         res.success = true;  
         return true; 
     }
@@ -136,6 +180,7 @@ void ArdroneThinc::move(int id, char direction) {
      */
 
     drone* d = drones[id];
+    int multiplier = x_scale; 
 
     switch(direction) {
         case 'l': 
@@ -149,10 +194,12 @@ void ArdroneThinc::move(int id, char direction) {
         case 'u': 
             twist_msg.linear.x = 0.25; 
             d->grid_pos[1]++;
+            multiplier = y_scale; 
             break; 
         case 'd': 
             twist_msg.linear.x = -0.25; 
             d->grid_pos[1]--;
+            multiplier = y_scale; 
             break; 
         default: 
             //nothing to do here
@@ -160,13 +207,29 @@ void ArdroneThinc::move(int id, char direction) {
     }
  
     twist_publishers[id].publish(twist_msg); 
+  //  ros::Duration(4.1*multiplier).sleep(); 
+  
+    if (id == 0) {
+        while (!img_vec_0.empty()) {
+            cout << "full" << endl; 
+            //seeing the "current" circle -> keep moving
+        }
+        while (img_vec_0.empty()) {
+//            cout << "empty" << endl; 
+            //in between cells -> keep moving
+        }
+    }
+    else if (id == 1) {
+        while (!img_vec_1.empty()) {
+            cout << "full" << endl; 
+            //seeing the "current" circle -> keep moving
+        }
+        while (img_vec_1.empty()) {
+//            cout << "empty" << endl; 
+            //in between cells -> keep moving
+        }
+    }
 
-    while(!img_vec.empty()) {
-        //seeing the "current" circle -> keep moving
-    }
-    while (img_vec.empty()) {
-        //in between cells -> keep moving
-    }
     //now we see the "next" circle -> stop.
     //reset values of twist_msg after we move to hover
     twist_msg.linear.x = 0; 
