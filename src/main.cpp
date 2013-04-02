@@ -105,9 +105,9 @@ int main(int argc, char *argv[]) {
             ("drone" + id_string + "/cmd_vel", 10);
         at.thresh_publishers[id] = n.advertise<sensor_msgs::Image>
             ("drone" + id_string + "/thinc/thresh", 10);
-        at.cam_subscribers[id] = n.subscribe<sensor_msgs::Image>
-            ("drone" + id_string + "/ardrone/image_raw", 1,
-            &ArdroneThinc::CamCallback, &at);
+//        at.cam_subscribers[id] = n.subscribe<sensor_msgs::Image>
+//            ("drone" + id_string + "/ardrone/image_raw", 1,
+//            &ArdroneThinc::CamCallback, &at);
         at.navdata_subscribers[id] = n.subscribe<ardrone_autonomy::Navdata>
             ("drone" + id_string + "/ardrone/navdata", 1,
             &ArdroneThinc::NavdataCallback, &at);

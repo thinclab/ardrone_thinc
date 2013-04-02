@@ -177,12 +177,6 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
             } 
         }   
 
-/*        twist_msg.linear.x = 0; 
-        twist_msg.linear.y = 0; 
-        twist_msg.linear.z = 0; 
-        twist_publishers[req.id].publish(twist_msg);
-        ros::Duration(2).sleep(); */
-
         res.success = true;  
         return true; 
     }
@@ -229,7 +223,6 @@ void ArdroneThinc::move(int id, char direction) {
     }
  
     twist_publishers[id].publish(twist_msg); 
-  //  ros::Duration(4.1*multiplier).sleep(); 
   
     if (id == 0) {
         while (!img_vec_0.empty()) {
@@ -237,7 +230,7 @@ void ArdroneThinc::move(int id, char direction) {
             //seeing the "current" circle -> keep moving
         }
         while (img_vec_0.empty()) {
-//            cout << "empty" << endl; 
+            cout << "empty" << endl; 
             //in between cells -> keep moving
         }
     }
@@ -247,7 +240,7 @@ void ArdroneThinc::move(int id, char direction) {
             //seeing the "current" circle -> keep moving
         }
         while (img_vec_1.empty()) {
-//            cout << "empty" << endl; 
+            cout << "empty" << endl; 
             //in between cells -> keep moving
         }
     }
