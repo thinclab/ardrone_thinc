@@ -17,6 +17,7 @@
 
 // ardrone_autonomy
 #include "ardrone_autonomy/CamSelect.h"
+#include "ardrone_autonomy/Navdata.h"
 
 // ardrone_thinc
 #include "ArdroneThinc.hpp"
@@ -79,7 +80,8 @@ int main(int argc, char *argv[]) {
 
         //push publishers into vectors
         ros::Publisher launch, land, reset, twist, thresh;
-        ros::Subscriber cam; ros::ServiceServer waypoint; 
+        ros::Subscriber cam, navdata; 
+        ros::ServiceServer waypoint;
         ros::ServiceClient camchannel, flattrim; 
         at.launch_publishers.push_back(launch); 
         at.land_publishers.push_back(land); 
@@ -87,6 +89,7 @@ int main(int argc, char *argv[]) {
         at.twist_publishers.push_back(twist); 
         at.thresh_publishers.push_back(thresh); 
         at.cam_subscribers.push_back(cam); 
+        at.navdata_subscribers.push_back(navdata);
         at.camchannel_clients.push_back(camchannel); 
         at.flattrim_clients.push_back(flattrim); 
         at.waypoint_navigator_services.push_back(waypoint); 
@@ -102,6 +105,12 @@ int main(int argc, char *argv[]) {
             ("drone" + id_string + "/cmd_vel", 10);
         at.thresh_publishers[id] = n.advertise<sensor_msgs::Image>
             ("drone" + id_string + "/thinc/thresh", 10);
+        at.cam_subscribers[id] = n.subscribe<sensor_msgs::Image>
+            ("drone" + id_string + "/ardrone/image_raw", 1,
+            &ArdroneThinc::CamCallback, &at);
+        at.navdata_subscribers[id] = n.subscribe<ardrone_autonomy::Navdata>
+            ("drone" + id_string + "/ardrone/navdata", 1,
+            &ArdroneThinc::NavdataCallback, &at);
         at.camchannel_clients[id] = n.serviceClient
             <ardrone_autonomy::CamSelect>
             ("drone" + id_string + "/ardrone/setcamchannel");
