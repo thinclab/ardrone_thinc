@@ -48,9 +48,13 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
 
     // detect circles using hough transform
     cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
-    GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
+    GaussianBlur(grey->image, grey->image, Size(3, 3), 2, 2); // denoise
     vector<Vec3f> c;
-    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120); //220 120
+
+    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 100, 50); //220 120
+
+//    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 150, 30); //220 120
+
     img_vec_0 = c; 
     Point avg_center; // grab from laptop code
     for(size_t i = 0; i < c.size(); i++) {
@@ -58,16 +62,16 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
         int radius = cvRound(c[i][2]);
         avg_center += (Point(c[i][0], c[i][1]) - avg_center)*(1.0/(i+1));
         circle(orig->image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-        circle(orig->image, center, radius, Scalar(255, 0, 0), 3, 8, 0);
+        circle(orig->image, center, radius, Scalar(0, 0, 255), 3, 8, 0);
     }
 
     double height = sonar/sqrt(1+tan(D2R(rotx))*tan(D2R(rotx))+tan(D2R(roty))*tan(D2R(roty)));
     Point over(height*sin(D2R(rotx)), height*sin(D2R(roty)));
-    cout << "height: " << height << endl;
-    cout << "over: " << over << endl;
+//    cout << "height: " << height << endl;
+//    cout << "over: " << over << endl;
 
     // convert opencv image to ros image and publish
-    //thresh.publish(orig->toImageMsg()); //giving error?
+    thresh_publishers[0].publish(orig->toImageMsg()); //giving error?
     
     // center drone
     //if(xp > UB) twist_msg.linear.y = -VEL;
@@ -196,7 +200,6 @@ void ArdroneThinc::move(int id, char direction) {
      */
 
     drone* d = drones[id];
-    int multiplier = x_scale; 
 
     switch(direction) {
         case 'l': 
@@ -210,12 +213,10 @@ void ArdroneThinc::move(int id, char direction) {
         case 'u': 
             twist_msg.linear.x = 0.25; 
             d->grid_pos[1]++;
-            multiplier = y_scale; 
             break; 
         case 'd': 
             twist_msg.linear.x = -0.25; 
             d->grid_pos[1]--;
-            multiplier = y_scale; 
             break; 
         default: 
             //nothing to do here
@@ -225,22 +226,24 @@ void ArdroneThinc::move(int id, char direction) {
     twist_publishers[id].publish(twist_msg); 
   
     if (id == 0) {
+        while (img_vec_0.empty()) {
+            //not starting over a circle -> keep moving
+        }
         while (!img_vec_0.empty()) {
-            cout << "full" << endl; 
             //seeing the "current" circle -> keep moving
         }
         while (img_vec_0.empty()) {
-            cout << "empty" << endl; 
             //in between cells -> keep moving
         }
     }
     else if (id == 1) {
+        while (img_vec_1.empty()) {
+            //not starting over a circle -> keep moving
+        }
         while (!img_vec_1.empty()) {
-            cout << "full" << endl; 
             //seeing the "current" circle -> keep moving
         }
         while (img_vec_1.empty()) {
-            cout << "empty" << endl; 
             //in between cells -> keep moving
         }
     }
