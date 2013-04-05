@@ -70,6 +70,15 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
 //    cout << "height: " << height << endl;
 //    cout << "over: " << over << endl;
 
+    const double WFOV = 58;
+    const double HFOV = 47;
+    double w_angle = WFOV/2*(2*avg_center.x/new_w - 1);
+    double h_angle = HFOV/2*(2*avg_center.y/new_h - 1);
+    Point avg_center_mm(height*tan(w_angle), height*tan(h_angle));
+    Point move = over - avg_center_mm;
+
+    cout << "move: " << move << endl;
+
     // convert opencv image to ros image and publish
     thresh_publishers[0].publish(orig->toImageMsg()); //giving error?
     

@@ -103,8 +103,11 @@ int main(int argc, char *argv[]) {
             &ArdroneThinc::Waypoint_Navigator_Callback, &at);  
     }
 
+    // at.cam_subscribers[0] = n.subscribe<sensor_msgs::Image>
+    //     ("drone0/ardrone/bottom/ardrone/bottom/image_raw", 1,
+    //     &ArdroneThinc::CamCallback0, &at);
     at.cam_subscribers[0] = n.subscribe<sensor_msgs::Image>
-        ("drone0/ardrone/bottom/ardrone/bottom/image_raw", 1,
+        ("/ardrone/bottom/image_raw", 1,
         &ArdroneThinc::CamCallback0, &at);
     at.cam_subscribers[1] = n.subscribe<sensor_msgs::Image>
         ("drone1/ardrone/bottom/ardrone/bottom/image_raw", 1, 
