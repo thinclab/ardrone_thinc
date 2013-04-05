@@ -192,6 +192,8 @@ bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator
 
         res.success = true;  
         return true; 
+
+        cout << "done moving" << endl; 
     }
 }
 
@@ -235,15 +237,20 @@ void ArdroneThinc::move(int id, char direction) {
     twist_publishers[id].publish(twist_msg); 
   
     if (id == 0) {
+        cout << "if drone 0 ..." << endl; 
         while (img_vec_0.empty()) {
+//            cout << "1" << endl; 
             //not starting over a circle -> keep moving
         }
         while (!img_vec_0.empty()) {
+//            cout << "2" << endl; 
             //seeing the "current" circle -> keep moving
         }
         while (img_vec_0.empty()) {
+//            cout << "3" << endl; 
             //in between cells -> keep moving
         }
+        cout << "leaving if ..." << endl; 
     }
     else if (id == 1) {
         while (img_vec_1.empty()) {
@@ -256,7 +263,7 @@ void ArdroneThinc::move(int id, char direction) {
             //in between cells -> keep moving
         }
     }
-
+    cout << "outside if's ... " << endl; 
     //now we see the "next" circle -> stop.
     //reset values of twist_msg after we move to hover
     twist_msg.linear.x = 0; 
@@ -264,6 +271,7 @@ void ArdroneThinc::move(int id, char direction) {
     twist_msg.linear.z = 0; 
     twist_publishers[id].publish(twist_msg);
     ros::Duration(2).sleep(); 
+    cout << "move" << endl; 
 }
 
 /*
