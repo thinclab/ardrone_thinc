@@ -29,4 +29,5 @@ rosbuild_gensrv()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(thinc_main src/main.cpp src/ArdroneThinc.cpp src/drone.cpp src/Socket.cpp)
+rosbuild_add_executable(thinc_main src/main.cpp src/ArdroneThinc.cpp src/drone.cpp)
+rosbuild_add_executable(rocket_sockets src/Socket.cpp)
