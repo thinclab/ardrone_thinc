@@ -81,23 +81,23 @@ int main(int argc, char *argv[]) {
 
         //advertise
         at.launch_publishers[id] = n.advertise<std_msgs::Empty> 
-            ("drone" + id_string + "/ardrone/takeoff", 5); 
+            (/*"drone" + id_string +*/ "/ardrone/takeoff", 5); 
         at.land_publishers[id] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "/ardrone/land", 5);
+            (/*"drone" + id_string +*/ "/ardrone/land", 5);
         at.reset_publishers[id] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "/ardrone/reset", 5);
+            (/*"drone" + id_string +*/ "/ardrone/reset", 5);
         at.twist_publishers[id] = n.advertise<geometry_msgs::Twist>
-            ("drone" + id_string + "/cmd_vel", 10);
+            (/*"drone" + id_string +*/ "/cmd_vel", 10);
         at.thresh_publishers[id] = n.advertise<sensor_msgs::Image>
-            ("drone" + id_string + "/thinc/thresh", 10);
+            (/*"drone" + id_string +*/ "/thinc/thresh", 10);
         at.navdata_subscribers[id] = n.subscribe<ardrone_autonomy::Navdata>
-            ("drone" + id_string + "/ardrone/navdata", 1,
+            (/*"drone" + id_string +*/ "/ardrone/navdata", 1,
             &ArdroneThinc::NavdataCallback, &at);
         at.camchannel_clients[id] = n.serviceClient
             <ardrone_autonomy::CamSelect>
-            ("drone" + id_string + "/ardrone/setcamchannel");
+            (/*"drone" + id_string +*/ "/ardrone/setcamchannel");
         at.flattrim_clients[id] = n.serviceClient<std_srvs::Empty>
-            ("drone" + id_string + "/ardrone/flattrim");
+            (/*"drone" + id_string +*/ "/ardrone/flattrim");
         at.waypoint_navigator_services[id] = n.advertiseService
             ("Waypoint_Navigator_" + id_string, 
             &ArdroneThinc::Waypoint_Navigator_Callback, &at);  
@@ -109,9 +109,9 @@ int main(int argc, char *argv[]) {
     at.cam_subscribers[0] = n.subscribe<sensor_msgs::Image>
         ("/ardrone/bottom/image_raw", 1,
         &ArdroneThinc::CamCallback0, &at);
-    at.cam_subscribers[1] = n.subscribe<sensor_msgs::Image>
-        ("drone1/ardrone/bottom/ardrone/bottom/image_raw", 1, 
-        &ArdroneThinc::CamCallback1, &at); 
+    //at.cam_subscribers[1] = n.subscribe<sensor_msgs::Image>
+    //    ("drone1/ardrone/bottom/ardrone/bottom/image_raw", 1, 
+    //    &ArdroneThinc::CamCallback1, &at); 
 
     // sleep to allow everything to register with roscore
     ros::Duration(1.0).sleep();

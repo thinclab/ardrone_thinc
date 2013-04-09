@@ -51,7 +51,7 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
     GaussianBlur(grey->image, grey->image, Size(3, 3), 2, 2); // denoise
     vector<Vec3f> c;
 
-    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 100, 50); //220 120
+    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 220, 120); //220 120
 
 //    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 150, 30); //220 120
 
@@ -65,19 +65,24 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
         circle(orig->image, center, radius, Scalar(0, 0, 255), 3, 8, 0);
     }
 
+
     double height = sonar/sqrt(1+tan(D2R(rotx))*tan(D2R(rotx))+tan(D2R(roty))*tan(D2R(roty)));
     Point over(height*sin(D2R(rotx)), height*sin(D2R(roty)));
-//    cout << "height: " << height << endl;
-//    cout << "over: " << over << endl;
+    cout << "height: " << height << endl;
+    cout << "over: " << over << endl;
+    cout << "sonar: " << sonar << endl;
 
     const double WFOV = 58;
     const double HFOV = 47;
-    double w_angle = WFOV/2*(2*avg_center.x/new_w - 1);
-    double h_angle = HFOV/2*(2*avg_center.y/new_h - 1);
-    Point avg_center_mm(height*tan(w_angle), height*tan(h_angle));
+    double w_angle = WFOV/2*(2*avg_center.x/(double)new_w - 1);
+    double h_angle = HFOV/2*(2*avg_center.y/(double)new_h - 1);
+    Point avg_center_mm(height*tan(D2R(w_angle)), height*tan(D2R(h_angle)));
     Point move = over - avg_center_mm;
 
+    cout << "angles: " << w_angle << " " << h_angle << endl;
+    cout << "avg_center: " << avg_center_mm << endl;
     cout << "move: " << move << endl;
+    cout << "move1?: " << over + avg_center_mm << endl;
 
     // convert opencv image to ros image and publish
     thresh_publishers[0].publish(orig->toImageMsg()); //giving error?
