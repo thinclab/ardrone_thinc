@@ -25,119 +25,86 @@
 using namespace cv;
 using namespace std;
 
+namespace smsg = std_msgs;
+namespace ssrv = std_srvs;
+using geometry_msgs::Twist;
+using sensor_msgs::Image;
+using ardrone_autonomy::Navdata;
+using ardrone_autonomy::CamSelect;
+
 int main(int argc, char *argv[]) {
+    // ros initialization
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
+
+    // data container
+    ArdroneThinc at; 
    
-    if (argc < 3) {
-        cout << "Arguments should include the following: number of columns, number of rows, then proceed in triples of drone id number, x coordinate, and y coordinate." << endl; 
-        exit(0); 
+    // handle usage
+    if (argc != 3) {
+        cout << "usage: ";
+        cout << argv[0];
+        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
+        cout << endl;
+        exit(1); 
     }
 
-    //first two arguments are columns and rows, respectively.
+    // grid size
     int c, r;
-    int x_w, y_w; 
     c = atoi(argv[1]); 
     r = atoi(argv[2]); 
-    
-    ArdroneThinc at; 
     at.columns = c; 
     at.rows = r;
 
-    ros::AsyncSpinner spinner((argc-3)/3);
+    // initial position and id
+    id = atoi(argv[3]);
+    x = atoi(argv[4]);
+    y = atoi(argv[5]);
+    
+    // publishers
+    at.launch_pub = n.advertise<smsg::Empty>("/ardrone/takeoff", 5);
+    at.land_pub = n.advertise<smsg::Empty>("/ardrone/land", 5);
+    at.reset_pub = n.advertise<smsg::Empty>("/ardrone/reset", 5);
+    at.twist_pub = n.advertise<Twist>("/cmd_vel", 10);
+    at.thresh_pub = n.advertise<Image>("/img_thresh", 10);
 
-    //after columns and rows, arguments proceed as follows: 
-    //drone name, spawn x position, spawn y position, and
-    //repeat for n drones
-    for (int i = 0; i < (argc-3)/3; i++) {
-        int id, x, y;
-        string id_string = argv[3 + 3*i];
-        string x_string = argv[4 + 3*i];
-        string y_string = argv[5 + 3*i];
-
-        id = atoi(id_string.c_str()); 
-        x = atoi(x_string.c_str()); 
-        y = atoi(y_string.c_str()); 
-
-        drone* d = new drone(id, x, y);
-        at.drones.push_back(d);
-
-        //push publishers into vectors
-        ros::Publisher launch, land, reset, twist, thresh;
-        ros::Subscriber cam, navdata; 
-        ros::ServiceServer waypoint;
-        ros::ServiceClient camchannel, flattrim; 
-        at.launch_publishers.push_back(launch); 
-        at.land_publishers.push_back(land); 
-        at.reset_publishers.push_back(reset); 
-        at.twist_publishers.push_back(twist); 
-        at.thresh_publishers.push_back(thresh); 
-        at.cam_subscribers.push_back(cam); 
-        at.navdata_subscribers.push_back(navdata);
-        at.camchannel_clients.push_back(camchannel); 
-        at.flattrim_clients.push_back(flattrim); 
-        at.waypoint_navigator_services.push_back(waypoint); 
-
-        //advertise
-        at.launch_publishers[id] = n.advertise<std_msgs::Empty> 
-            ("drone" + id_string + "/ardrone/takeoff", 5); 
-        at.land_publishers[id] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "/ardrone/land", 5);
-        at.reset_publishers[id] = n.advertise<std_msgs::Empty>
-            ("drone" + id_string + "/ardrone/reset", 5);
-        at.twist_publishers[id] = n.advertise<geometry_msgs::Twist>
-            ("drone" + id_string + "/cmd_vel", 10);
-        at.thresh_publishers[id] = n.advertise<sensor_msgs::Image>
-            ("drone" + id_string + "/thinc/thresh", 10);
-        at.navdata_subscribers[id] = n.subscribe<ardrone_autonomy::Navdata>
-            ("drone" + id_string + "/ardrone/navdata", 1,
+    // subscribers
+    at.cam_sub = n.subscribe<Image>("/ardrone/bottom/image_raw", 1,
+            &ArdroneThinc::CamCallback, &at);
+    at.nav_sub = n.subscribe<Navdata>("/ardrone/navdata", 1,
             &ArdroneThinc::NavdataCallback, &at);
-        at.camchannel_clients[id] = n.serviceClient
-            <ardrone_autonomy::CamSelect>
-            ("drone" + id_string + "/ardrone/setcamchannel");
-        at.flattrim_clients[id] = n.serviceClient<std_srvs::Empty>
-            ("drone" + id_string + "/ardrone/flattrim");
-        at.waypoint_navigator_services[id] = n.advertiseService
-            ("Waypoint_Navigator_" + id_string, 
-            &ArdroneThinc::Waypoint_Navigator_Callback, &at);  
-    }
 
-    // at.cam_subscribers[0] = n.subscribe<sensor_msgs::Image>
-    //     ("drone0/ardrone/bottom/ardrone/bottom/image_raw", 1,
-    //     &ArdroneThinc::CamCallback0, &at);
-    at.cam_subscribers[0] = n.subscribe<sensor_msgs::Image>
-        ("/ardrone/bottom/image_raw", 1,
-        &ArdroneThinc::CamCallback0, &at);
-    at.cam_subscribers[1] = n.subscribe<sensor_msgs::Image>
-        ("drone1/ardrone/bottom/ardrone/bottom/image_raw", 1, 
-        &ArdroneThinc::CamCallback1, &at); 
+    // service clients
+    at.camchan_cli = n.serviceClient<CamSelect>("/ardrone/setcamchannel", 1);
+    at.trim_cli = n.serviceClient<ssrv::Empty>("/ardrone/flattrim");
 
-    // sleep to allow everything to register with roscore
+    // services
+    at.way_srv = n.advertiseService<Waypoint>("/waypoint",
+            &ArdroneThinc::WaypointCallback, &at);
+
+    // let roscore catch up
     ros::Duration(1.0).sleep();
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {
         // set camera to bottom
-        ardrone_autonomy::CamSelect camsrv;
-        camsrv.request.channel = 1;
+        ardrone_autonomy::CamSelect camchan_req;
+        camchan_req.request.channel = 1;
+        at.camchan_cli.call(camchan_req);
+
         // calibrate to flat surface
-        std_srvs::Empty trimsrv;
-        // hover initially
+        ssrv::Empty trim_req;
+        at.trim_cli.call(trim_req);
+
+        // hover initially and launch
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
-        cout << "taking off..." << endl; 
-        
-        for (int i = 0; i < at.drones.size(); i++) {
-            at.camchannel_clients[i].call(camsrv); 
-            at.flattrim_clients[i].call(trimsrv); 
-            at.launch_publishers[i].publish(at.empty_msg); 
-        }
+        at.launch_pub.publish(at.empty_msg);
     } 
     
-    spinner.start();
-    ros::waitForShutdown();
+    ros::spin();
 
     return 0;
 }
