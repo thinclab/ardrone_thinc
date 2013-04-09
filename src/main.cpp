@@ -63,24 +63,24 @@ int main(int argc, char *argv[]) {
     y = atoi(argv[5]);
     
     // publishers
-    at.launch_pub = n.advertise<smsg::Empty>("/ardrone/takeoff", 5);
-    at.land_pub = n.advertise<smsg::Empty>("/ardrone/land", 5);
-    at.reset_pub = n.advertise<smsg::Empty>("/ardrone/reset", 5);
-    at.twist_pub = n.advertise<Twist>("/cmd_vel", 10);
-    at.thresh_pub = n.advertise<Image>("/img_thresh", 10);
+    at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
+    at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
+    at.reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
+    at.twist_pub = n.advertise<Twist>("cmd_vel", 10);
+    at.thresh_pub = n.advertise<Image>("img_thresh", 10);
 
     // subscribers
-    at.cam_sub = n.subscribe<Image>("/ardrone/bottom/image_raw", 1,
+    at.cam_sub = n.subscribe<Image>("ardrone/bottom/image_raw", 1,
             &ArdroneThinc::CamCallback, &at);
-    at.nav_sub = n.subscribe<Navdata>("/ardrone/navdata", 1,
+    at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1,
             &ArdroneThinc::NavdataCallback, &at);
 
     // service clients
-    at.camchan_cli = n.serviceClient<CamSelect>("/ardrone/setcamchannel", 1);
-    at.trim_cli = n.serviceClient<ssrv::Empty>("/ardrone/flattrim");
+    at.camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
+    at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
 
     // services
-    at.way_srv = n.advertiseService<Waypoint>("/waypoint",
+    at.way_srv = n.advertiseService<Waypoint>("waypoint",
             &ArdroneThinc::WaypointCallback, &at);
 
     // let roscore catch up

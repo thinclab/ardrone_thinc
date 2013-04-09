@@ -49,6 +49,9 @@ class ArdroneThinc {
         // grid information
         int columns, rows; 
         int x_scale, y_scale; 
+
+        // grid position
+        int x, y;
         
         // callback persistent storage
         double rotx, roty;

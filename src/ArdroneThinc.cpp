@@ -19,21 +19,16 @@
 // misc
 #include <cmath>
 
+// degree to radian helper macro
 #define D2R(a) (a*M_PI/180)
 
 using namespace cv;
 using namespace std;
 
 #define VEL 0.05
-#define LB 0.2
-#define UB 0.8
-/*
-#define COL1 <<something>> // one of the grid colors
-#define COL2 <<something>> // the other grid color
-*/
 
 // threshold images and adjust drone position accordingly
-void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
+void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     // not implemented yet
     //if(!stabilize) return;
 
@@ -49,13 +44,8 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
     // detect circles using hough transform
     cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
     GaussianBlur(grey->image, grey->image, Size(3, 3), 2, 2); // denoise
-    vector<Vec3f> c;
+    HoughCircles(grey->image, this.img_vec, CV_HOUGH_GRADIENT, 2, 2, 220, 120);
 
-    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 100, 50); //220 120
-
-//    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 150, 30); //220 120
-
-    img_vec_0 = c; 
     Point avg_center; // grab from laptop code
     for(size_t i = 0; i < c.size(); i++) {
         Point center(cvRound(c[i][0]), cvRound(c[i][1]));
@@ -65,7 +55,10 @@ void ArdroneThinc::CamCallback0(const sensor_msgs::ImageConstPtr& rosimg) {
         circle(orig->image, center, radius, Scalar(0, 0, 255), 3, 8, 0);
     }
 
-    double height = sonar/sqrt(1+tan(D2R(rotx))*tan(D2R(rotx))+tan(D2R(roty))*tan(D2R(roty)));
+    double tan2x = tan(D2R(this.rotx))*tan(D2R(this.rotx));
+    double tan2y = tan(D2R(this.roty))*tan(D2R(this.roty));
+    double height = this.sonar/sqrt(1+tan2x+tan2y);
+
     Point over(height*sin(D2R(rotx)), height*sin(D2R(roty)));
 //    cout << "height: " << height << endl;
 //    cout << "over: " << over << endl;
