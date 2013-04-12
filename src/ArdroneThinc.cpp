@@ -23,8 +23,9 @@
 #define D2R(a) (a*M_PI/180)
 
 using namespace cv;
-using namespace std;
 
+using std::cout;
+using std::endl;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
@@ -48,20 +49,20 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     // detect circles using hough transform
     cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
     GaussianBlur(grey->image, grey->image, Size(3, 3), 2, 2); // denoise
-    HoughCircles(grey->image, this.img_vec, CV_HOUGH_GRADIENT, 2, 2, 220, 120);
+    HoughCircles(grey->image, this->circles, CV_HOUGH_GRADIENT, 2, 2, 220, 120);
 
     Point avg_center; // grab from laptop code
-    for(size_t i = 0; i < c.size(); i++) {
-        Point center(cvRound(c[i][0]), cvRound(c[i][1]));
-        int radius = cvRound(c[i][2]);
-        avg_center += (Point(c[i][0], c[i][1]) - avg_center)*(1.0/(i+1));
+    for(size_t i = 0; i < this->circles.size(); i++) {
+        Point center(cvRound(this->circles[i][0]), cvRound(this->circles[i][1]));
+        int radius = cvRound(this->circles[i][2]);
+        avg_center += (Point(this->circles[i][0], this->circles[i][1]) - avg_center)*(1.0/(i+1));
         circle(orig->image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
         circle(orig->image, center, radius, Scalar(0, 0, 255), 3, 8, 0);
     }
 
-    double tan2x = tan(D2R(this.rotx))*tan(D2R(this.rotx));
-    double tan2y = tan(D2R(this.roty))*tan(D2R(this.roty));
-    double height = this.sonar/sqrt(1+tan2x+tan2y);
+    double tan2x = tan(D2R(this->rotx))*tan(D2R(this->rotx));
+    double tan2y = tan(D2R(this->roty))*tan(D2R(this->roty));
+    double height = this->sonar/sqrt(1+tan2x+tan2y);
 
     Point over(height*sin(D2R(rotx)), height*sin(D2R(roty)));
 //    cout << "height: " << height << endl;
@@ -77,7 +78,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     cout << "move: " << move << endl;
 
     // convert opencv image to ros image and publish
-    this.thresh_pub.publish(orig->toImageMsg());
+    this->thresh_pub.publish(orig->toImageMsg());
     
     // center drone
     //if(xp > UB) twist_msg.linear.y = -VEL;
@@ -91,33 +92,33 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
 
 // collect navdata
 void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
-    this.rotx = nav->rotX;
-    this.roty = nav->rotY;
-    this.sonar = nav->altd;
+    this->rotx = nav->rotX;
+    this->roty = nav->rotY;
+    this->sonar = nav->altd;
 }
 
 // move to designated sector
 bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
     // ensure valid grid cell
-    if(this.x>0 && this.y>0 && this.x<this.columns && this.y<this.rows) {
+    if(this->x>0 && this->y>0 && this->x<this->columns && this->y<this->rows) {
         res.success = false; 
         return false; 
     }
 
     // deltas
-    int dx = this.x - req.x;
-    int dy = this.y - req.y;
+    int dx = this->x - req.x;
+    int dy = this->y - req.y;
 
     // move: x first, then y
     while(ros::ok() && dx && dy) {
         if(dx > 0) {
-            move(left); dx++;
+            move(LEFT); dx++;
         } else if(dx < 0) {
-            move(right); dx--;
+            move(RIGHT); dx--;
         } else if(dy < 0) {
-            move(up); dy++;
+            move(UP); dy++;
         } else if(dy > 0) {
-            move(down); dy--;
+            move(DOWN); dy--;
         }
     }
 
@@ -134,39 +135,39 @@ void ArdroneThinc::move(enum dir d) {
      */
 
     switch(d) {
-        case left: 
-            this.twist_msg.linear.y = MOVE_VEL; 
-            this.x--;
+        case LEFT: 
+            this->twist_msg.linear.y = MOVE_VEL; 
+            this->x--;
             break; 
-        case right: 
-            this.twist_msg.linear.y = -MOVE_VEL;
-            this.x++;
+        case RIGHT: 
+            this->twist_msg.linear.y = -MOVE_VEL;
+            this->x++;
             break; 
-        case up: 
-            this.twist_msg.linear.x = MOVE_VEL; 
-            this.y++;
+        case UP: 
+            this->twist_msg.linear.x = MOVE_VEL; 
+            this->y++;
             break; 
-        case down: 
-            this.twist_msg.linear.x = -MOVE_VEL;
-            this.y--;
+        case DOWN: 
+            this->twist_msg.linear.x = -MOVE_VEL;
+            this->y--;
             break; 
         default: 
             break;  
     }
  
     // do it
-    this.twist_pub.publish(this.twist_msg); 
+    this->twist_pub.publish(this->twist_msg); 
   
     // wait until we see a circle again
-    while (this.img_vec.empty());
-    while (!this.img_vec.empty());
-    while (this.img_vec.empty());
+    while (this->circles.empty());
+    while (!this->circles.empty());
+    while (this->circles.empty());
 
     // stop
-    this.twist_msg.linear.x = 0; 
-    this.twist_msg.linear.y = 0; 
-    this.twist_msg.linear.z = 0; 
-    this.twist_pub.publish(this.twist_msg);
+    this->twist_msg.linear.x = 0; 
+    this->twist_msg.linear.y = 0; 
+    this->twist_msg.linear.z = 0; 
+    this->twist_pub.publish(this->twist_msg);
     ros::Duration(2).sleep(); 
 }
 

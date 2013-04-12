@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
 
     // services
-    at.waypoint_srv = n.advertiseService<Waypoint>("waypoint",
+    at.waypoint_srv = n.advertiseService("waypoint",
             &ArdroneThinc::WaypointCallback, &at);
 
     // let roscore catch up

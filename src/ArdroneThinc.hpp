@@ -29,7 +29,7 @@ using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
 
 // move enum
-enum dir { left, right, up, down };
+enum dir { LEFT, RIGHT, UP, DOWN };
 
 class ArdroneThinc {
     public:
@@ -59,7 +59,7 @@ class ArdroneThinc {
         // callback persistent storage
         double rotx, roty;
         int sonar;
-        vector<cv::Vec3f> img_vec; 
+        vector<cv::Vec3f> circles; 
 
         // subscriber callbacks
         void CamCallback(const ImageConstPtr& rosimg);
