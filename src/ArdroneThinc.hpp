@@ -18,15 +18,18 @@
 
 using namespace std; 
 
-namespace smsgs = std_msgs;
+namespace smsg = std_msgs;
 using ros::Publisher;
-using ros::Subsriber;
+using ros::Subscriber;
 using ros::ServiceClient;
 using ros::ServiceServer;
 using geometry_msgs::Twist;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
+
+// move enum
+enum dir { left, right, up, down };
 
 class ArdroneThinc {
     public:
@@ -50,8 +53,8 @@ class ArdroneThinc {
         int columns, rows; 
         int x_scale, y_scale; 
 
-        // grid position
-        int x, y;
+        // grid position, interoperability id
+        int x, y, id;
         
         // callback persistent storage
         double rotx, roty;
@@ -66,8 +69,7 @@ class ArdroneThinc {
         bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
 
         // helper functions
-        bool is_valid_grid_cell(int, int); 
-        void move(int, char); 
+        void move(enum dir d); 
 };
 
 #endif

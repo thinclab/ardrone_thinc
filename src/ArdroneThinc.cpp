@@ -25,7 +25,11 @@
 using namespace cv;
 using namespace std;
 
-#define VEL 0.05
+using sensor_msgs::ImageConstPtr;
+using ardrone_autonomy::NavdataConstPtr;
+using ardrone_thinc::Waypoint;
+
+#define MOVE_VEL 0.25
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
@@ -73,7 +77,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     cout << "move: " << move << endl;
 
     // convert opencv image to ros image and publish
-    thresh_publishers[0].publish(orig->toImageMsg()); //giving error?
+    this.thresh_pub.publish(orig->toImageMsg());
     
     // center drone
     //if(xp > UB) twist_msg.linear.y = -VEL;
@@ -85,117 +89,43 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //twist.publish(twist_msg);
 }
 
-void ArdroneThinc::CamCallback1(const sensor_msgs::ImageConstPtr& rosimg) {
-    // convert ros image to opencv image
-    cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
-    cv_bridge::CvImagePtr grey(new cv_bridge::CvImage());
-
-    // resize image (faster processing);
-    int new_h = orig->image.size.p[0];
-    int new_w = (new_h*orig->image.size.p[1])/orig->image.size.p[0];
-    resize(orig->image, orig->image, Size(new_w, new_h), 0, 0);
-
-    // detect circles using hough transform
-    cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
-    GaussianBlur(grey->image, grey->image, Size(3, 3), 0); // denoise
-    vector<Vec3f> c;
-    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 5, 220, 120); //220 120
-    img_vec_1 = c;
-    for(size_t i = 0; i < c.size(); i++) {
-        Point center(cvRound(c[i][0]), cvRound(c[i][1]));
-        int radius = cvRound(c[i][2]);
-        circle(orig->image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-        circle(orig->image, center, radius, Scalar(255, 0, 0), 3, 8, 0);
-    }
-
-    // convert opencv image to ros image and publish
-    //thresh.publish(orig->toImageMsg()); //giving error?
-
-    // center drone
-    //if(xp > UB) twist_msg.linear.y = -VEL;
-    //else if(xp < LB) twist_msg.linear.y = VEL;
-    //else if(LB < xp && xp < UB) twist_msg.linear.y = 0;
-    //if(yp > UB) twist_msg.linear.x = -VEL;
-    //else if(yp < LB) twist_msg.linear.x = VEL;
-    //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
-    //twist.publish(twist_msg);
+// collect navdata
+void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
+    this.rotx = nav->rotX;
+    this.roty = nav->rotY;
+    this.sonar = nav->altd;
 }
 
-
-void ArdroneThinc::NavdataCallback(const ardrone_autonomy::NavdataConstPtr& nav) {
-    rotx = nav->rotX;
-    roty = nav->rotY;
-    sonar = nav->altd;
-}
-
-/*
- * Callback function of the Waypoint_Navigator Service.
- * Determines how much to move and calls move()
- * accordingly. Returns true if successful, otherwise
- * false.
- */
-bool ArdroneThinc::Waypoint_Navigator_Callback(ardrone_thinc::Waypoint_Navigator::Request &req, ardrone_thinc::Waypoint_Navigator::Response &res) {
- 
-    drone* d = drones[req.id]; 
-    
-    if (!is_valid_grid_cell(req.x, req.y) || d == NULL) {
+// move to designated sector
+bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+    // ensure valid grid cell
+    if(this.x>0 && this.y>0 && this.x<this.columns && this.y<this.rows) {
         res.success = false; 
         return false; 
     }
-    else {
 
-        bool move_right = false;
-        bool move_left = false;
-        bool move_up = false;
-        bool move_down = false;
+    // deltas
+    int dx = this.x - req.x;
+    int dy = this.y - req.y;
 
-        int delta_x = d->grid_pos[0] - req.x;
-        int delta_y = d->grid_pos[1] - req.y;
-
-        if (delta_x < 0) 
-            move_right = true;
-        else if (delta_x > 0)
-            move_left = true;
-        if (delta_y < 0)
-            move_up = true;
-        else if (delta_y > 0)
-            move_down = true;
-
-        int x_moves = abs(delta_x);
-        int y_moves = abs(delta_y);
-
-        while (ros::ok() && (x_moves > 0 || y_moves > 0)) {
-            //complete all moves in x-direction first
-            if (x_moves > 0) {
-                if (move_right) 
-                    move(req.id, 'r'); 
-                else if (move_left)
-                    move(req.id, 'l'); 
-                x_moves--; 
-            }
-            //complete all moves in y-direction second
-            else if (y_moves > 0) {
-                if (move_up)
-                    move(req.id, 'u');               
-                else if (move_down)
-                    move(req.id, 'd'); 
-                y_moves--; 
-            } 
-        }   
-
-        res.success = true;  
-        return true; 
-
-        cout << "done moving" << endl; 
+    // move: x first, then y
+    while(ros::ok() && dx && dy) {
+        if(dx > 0) {
+            move(left); dx++;
+        } else if(dx < 0) {
+            move(right); dx--;
+        } else if(dy < 0) {
+            move(up); dy++;
+        } else if(dy > 0) {
+            move(down); dy--;
+        }
     }
+
+    return (res.success = true);
 }
 
-/*
- * Move the drone with the given id one cell in the 
- * direction indicated- 'r' = right, 'l' = left, 
- * 'u' = up, and 'd' = down.
- */
-void ArdroneThinc::move(int id, char direction) {
+// move in the direction given
+void ArdroneThinc::move(enum dir d) {
 
     /* -linear.x: move backward
      * +linear.x: move forward
@@ -203,79 +133,41 @@ void ArdroneThinc::move(int id, char direction) {
      * +linear.y: move left
      */
 
-    drone* d = drones[id];
-
-    switch(direction) {
-        case 'l': 
-            twist_msg.linear.y = 0.25; 
-            d->grid_pos[0]--; 
+    switch(d) {
+        case left: 
+            this.twist_msg.linear.y = MOVE_VEL; 
+            this.x--;
             break; 
-        case 'r': 
-            twist_msg.linear.y = -0.25; 
-            d->grid_pos[0]++;
+        case right: 
+            this.twist_msg.linear.y = -MOVE_VEL;
+            this.x++;
             break; 
-        case 'u': 
-            twist_msg.linear.x = 0.25; 
-            d->grid_pos[1]++;
+        case up: 
+            this.twist_msg.linear.x = MOVE_VEL; 
+            this.y++;
             break; 
-        case 'd': 
-            twist_msg.linear.x = -0.25; 
-            d->grid_pos[1]--;
+        case down: 
+            this.twist_msg.linear.x = -MOVE_VEL;
+            this.y--;
             break; 
         default: 
-            //nothing to do here
             break;  
     }
  
-    twist_publishers[id].publish(twist_msg); 
+    // do it
+    this.twist_pub.publish(this.twist_msg); 
   
-    if (id == 0) {
-        cout << "if drone 0 ..." << endl; 
-        while (img_vec_0.empty()) {
-//            cout << "1" << endl; 
-            //not starting over a circle -> keep moving
-        }
-        while (!img_vec_0.empty()) {
-//            cout << "2" << endl; 
-            //seeing the "current" circle -> keep moving
-        }
-        while (img_vec_0.empty()) {
-//            cout << "3" << endl; 
-            //in between cells -> keep moving
-        }
-        cout << "leaving if ..." << endl; 
-    }
-    else if (id == 1) {
-        while (img_vec_1.empty()) {
-            //not starting over a circle -> keep moving
-        }
-        while (!img_vec_1.empty()) {
-            //seeing the "current" circle -> keep moving
-        }
-        while (img_vec_1.empty()) {
-            //in between cells -> keep moving
-        }
-    }
-    cout << "outside if's ... " << endl; 
-    //now we see the "next" circle -> stop.
-    //reset values of twist_msg after we move to hover
-    twist_msg.linear.x = 0; 
-    twist_msg.linear.y = 0; 
-    twist_msg.linear.z = 0; 
-    twist_publishers[id].publish(twist_msg);
+    // wait until we see a circle again
+    while (this.img_vec.empty());
+    while (!this.img_vec.empty());
+    while (this.img_vec.empty());
+
+    // stop
+    this.twist_msg.linear.x = 0; 
+    this.twist_msg.linear.y = 0; 
+    this.twist_msg.linear.z = 0; 
+    this.twist_pub.publish(this.twist_msg);
     ros::Duration(2).sleep(); 
-    cout << "move" << endl; 
-}
-
-/*
- * Determine if the given grid cell (x,y) is valid.
- * Return true if it is, otherwise return false.
- */
-bool ArdroneThinc::is_valid_grid_cell(int x, int y) {
-    if (x < 0 || y < 0 || x > columns || y > rows)
-        return false;
-
-    return true;
 }
 
 /*

@@ -51,16 +51,13 @@ int main(int argc, char *argv[]) {
     }
 
     // grid size
-    int c, r;
-    c = atoi(argv[1]); 
-    r = atoi(argv[2]); 
-    at.columns = c; 
-    at.rows = r;
+    at.columns = atoi(argv[1]);
+    at.rows = atoi(argv[2]);
 
     // initial position and id
-    id = atoi(argv[3]);
-    x = atoi(argv[4]);
-    y = atoi(argv[5]);
+    at.id = atoi(argv[3]);
+    at.x = atoi(argv[4]);
+    at.y = atoi(argv[5]);
     
     // publishers
     at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
@@ -80,7 +77,7 @@ int main(int argc, char *argv[]) {
     at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
 
     // services
-    at.way_srv = n.advertiseService<Waypoint>("waypoint",
+    at.waypoint_srv = n.advertiseService<Waypoint>("waypoint",
             &ArdroneThinc::WaypointCallback, &at);
 
     // let roscore catch up
