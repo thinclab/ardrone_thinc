@@ -16,6 +16,13 @@
 // persistent storage
 #include "opencv2/imgproc/imgproc.hpp"
 
+//sockets
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 using namespace std; 
 
 namespace smsg = std_msgs;
@@ -31,6 +38,13 @@ using ardrone_thinc::Waypoint;
 // move enum
 enum dir { LEFT, RIGHT, UP, DOWN };
 
+struct Msg_Cmd {
+    int x;
+    int y;
+    int z;
+    int id;
+};
+
 class ArdroneThinc {
     public:
         // ros topics and services
@@ -43,6 +57,7 @@ class ArdroneThinc {
         Subscriber nav_sub;
         ServiceClient camchan_cli;
         ServiceClient trim_cli;
+        ServiceClient waypoint_cli; 
         ServiceServer waypoint_srv;
 
         // reusable messages
@@ -70,6 +85,11 @@ class ArdroneThinc {
 
         // helper functions
         void move(enum dir d); 
+
+        //socket stuff
+        unsigned char* pack(int, int);
+        Msg_Cmd unpack(unsigned char*);
+        void rocket_socket(void);
 };
 
 #endif

@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
     // service clients
     at.camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
     at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
+    at.waypoint_cli = n.serviceClient<Waypoint>("ardrone/waypoint"); 
 
     // services
     at.waypoint_srv = n.advertiseService("waypoint",

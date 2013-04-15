@@ -172,6 +172,79 @@ void ArdroneThinc::move(enum dir d) {
 }
 
 /*
+ * Listen for messages. Message should be of the form
+ * <x><y><z><id>. Then send message back of the form
+ * <success><observation>.
+ */
+void ArdroneThinc::rocket_socket(void) {
+    struct Msg_Cmd cmd;
+    int sockfd;
+    int n;
+    struct sockaddr_in servaddr;
+    struct sockaddr_in cliaddr;
+    socklen_t len;
+    unsigned char* msg;
+
+    sockfd=socket(AF_INET, SOCK_DGRAM, 0);
+
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(32000);
+    bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+
+    for (;;) {
+        len = sizeof(cliaddr);
+        n = recvfrom(sockfd, msg, 1000, 0, (struct sockaddr*)&cliaddr, &len);
+        cmd = unpack(msg);
+        ardrone_thinc::Waypoint waypoint_msg; 
+        waypoint_msg.request.x = cmd.x; 
+        waypoint_msg.request.y = cmd.y; 
+        waypoint_msg.request.z = cmd.z; 
+        waypoint_msg.request.id = cmd.id; 
+        waypoint_cli.call(waypoint_msg); 
+        sendto(sockfd, msg, n, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        printf("-------------------------------------------------------\n");
+        msg[n] = 0;
+        printf("Received the following:\n");
+        printf("%s", msg);
+        printf("-------------------------------------------------------\n");
+    }
+
+}
+
+/* 
+ * Unpack the message we receive. Parse it into a message
+ * command to later translate into a waypoint service call.
+ */
+Msg_Cmd ArdroneThinc::unpack(unsigned char* bytes) {
+    Msg_Cmd res;
+    res.x = bytes[3] << 24  | bytes[2] << 16  | bytes[1] << 8 | bytes[0];
+    res.y = bytes[7] << 24  | bytes[6] << 16  | bytes[5] << 8 | bytes[4];
+    res.z = bytes[11] << 24 | bytes[10] << 16 | bytes[9] << 8 | bytes[8];
+    res.id = bytes[15] << 24 | bytes[14] << 16 | bytes[13] << 8 | bytes[12];
+    return res;
+}
+
+/* 
+ * Pack the return message.
+ */
+unsigned char* ArdroneThinc::pack(int success, int obv) {
+    unsigned char bytes[8];
+    bytes[3]  = (success & 0xff000000) >> 24;
+    bytes[2]  = (success & 0xff0000)   >> 16;
+    bytes[1]  = (success & 0xff00)     >> 8;
+    bytes[0]  = (success & 0xff);
+    bytes[7]  = (obv & 0xff000000) >> 24;
+    bytes[6]  = (obv & 0xff0000)   >> 16;
+    bytes[5]  = (obv & 0xff00)     >> 8;
+    bytes[4]  = (obv & 0xff);
+    return bytes;
+}
+
+
+
+/*
  * Determine if the color of the grid cell we are over
  * is the color we expect it to be. Return true if it
  * is correct, false otherwise.
