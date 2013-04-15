@@ -79,3 +79,12 @@ Msg_Cmd Socket::Parse_Msg(char* msg[]) {
 
     return cmd; 
 }
+
+byte[] Socket::intToBytes(int paramInt) {
+    byte[] arrayOfByte = new byte[4];
+    ByteBuffer localByteBuffer = ByteBuffer.allocate(4);
+    localByteBuffer.putInt(paramInt);
+    for (int i = 0; i < 4; i++)
+        arrayOfByte[(3 - i)] = localByteBuffer.array()[i];
+    return arrayOfByte;
+}
