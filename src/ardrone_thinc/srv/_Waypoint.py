@@ -120,15 +120,15 @@ import struct
 
 
 class WaypointResponse(genpy.Message):
-  _md5sum = "0f26af2399fbfbc8170d9a60ed7b9846"
+  _md5sum = "3c2bcf2ff0894cb3058b1bf4c8c4175a"
   _type = "ardrone_thinc/WaypointResponse"
   _has_header = False #flag to mark the presence of a Header object
-  _full_text = """int64 success
+  _full_text = """int32 success
 
 
 """
   __slots__ = ['success']
-  _slot_types = ['int64']
+  _slot_types = ['int32']
 
   def __init__(self, *args, **kwds):
     """
@@ -164,7 +164,7 @@ class WaypointResponse(genpy.Message):
     :param buff: buffer, ``StringIO``
     """
     try:
-      buff.write(_struct_q.pack(self.success))
+      buff.write(_struct_i.pack(self.success))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -176,8 +176,8 @@ class WaypointResponse(genpy.Message):
     try:
       end = 0
       start = end
-      end += 8
-      (self.success,) = _struct_q.unpack(str[start:end])
+      end += 4
+      (self.success,) = _struct_i.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -190,7 +190,7 @@ class WaypointResponse(genpy.Message):
     :param numpy: numpy python module
     """
     try:
-      buff.write(_struct_q.pack(self.success))
+      buff.write(_struct_i.pack(self.success))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -203,16 +203,16 @@ class WaypointResponse(genpy.Message):
     try:
       end = 0
       start = end
-      end += 8
-      (self.success,) = _struct_q.unpack(str[start:end])
+      end += 4
+      (self.success,) = _struct_i.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_q = struct.Struct("<q")
+_struct_i = struct.Struct("<i")
 class Waypoint(object):
   _type          = 'ardrone_thinc/Waypoint'
-  _md5sum = '7b58d4e3b6e9ac30111555eb9e29c803'
+  _md5sum = 'ee924ed92135816760f36b439216f4d2'
   _request_class  = WaypointRequest
   _response_class = WaypointResponse

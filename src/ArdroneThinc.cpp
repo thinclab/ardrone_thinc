@@ -174,41 +174,64 @@ void ArdroneThinc::move(enum dir d) {
 /*
  * Listen for messages. Message should be of the form
  * <x><y><z><id>. Then send message back of the form
- * <success><observation>.
+ * <success><observation>. Parameters are local port
+ * number, remote ip, and remote port number.
  */
-void ArdroneThinc::rocket_socket(void) {
+void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_no) {
+
+    hostent * record = gethostbyname(remote_ip);
+    if (record == NULL) {
+        herror("gethostbyname failed");
+        exit(1);
+    }
+    in_addr * addressptr = (in_addr *) record->h_addr;
+
     struct Msg_Cmd cmd;
     int sockfd;
     int n;
     struct sockaddr_in servaddr;
     struct sockaddr_in cliaddr;
     socklen_t len;
-    unsigned char* msg;
+    unsigned char* msg_in; //message received
+    unsigned char* msg_out; //message sent
+    int suc; //success value
+    int obs; //observation value
 
     sockfd=socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0)
+        perror("socket creation");
 
     bzero(&servaddr, sizeof(servaddr));
+
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(32000);
-    bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+    servaddr.sin_port = htons(port_no);
+
+    int b = bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+    if (b < 0)
+        perror("bind failed"); 
+
+    cliaddr.sin_family = AF_INET;
+    cliaddr.sin_addr = *addressptr;
+    cliaddr.sin_port = htons(remote_port_no);
 
     for (;;) {
         len = sizeof(cliaddr);
-        n = recvfrom(sockfd, msg, 1000, 0, (struct sockaddr*)&cliaddr, &len);
-        cmd = unpack(msg);
+        n = recvfrom(sockfd, &msg_in, 100, 0, (struct sockaddr*)&cliaddr, &len);
+        if (n < 0) 
+            perror("recvfrom failed");
+        msg_in[n] = 0; 
+        cmd = unpack(msg_in);
+
         ardrone_thinc::Waypoint waypoint_msg; 
         waypoint_msg.request.x = cmd.x; 
         waypoint_msg.request.y = cmd.y; 
         waypoint_msg.request.z = cmd.z; 
         waypoint_msg.request.id = cmd.id; 
         waypoint_cli.call(waypoint_msg); 
-        sendto(sockfd, msg, n, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
-        printf("-------------------------------------------------------\n");
-        msg[n] = 0;
-        printf("Received the following:\n");
-        printf("%s", msg);
-        printf("-------------------------------------------------------\n");
+
+        msg_out = pack(suc, obs);
+        sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
     }
 
 }
@@ -229,16 +252,16 @@ Msg_Cmd ArdroneThinc::unpack(unsigned char* bytes) {
 /* 
  * Pack the return message.
  */
-unsigned char* ArdroneThinc::pack(int success, int obv) {
+unsigned char* ArdroneThinc::pack(int success, int observation) {
     unsigned char bytes[8];
     bytes[3]  = (success & 0xff000000) >> 24;
     bytes[2]  = (success & 0xff0000)   >> 16;
     bytes[1]  = (success & 0xff00)     >> 8;
     bytes[0]  = (success & 0xff);
-    bytes[7]  = (obv & 0xff000000) >> 24;
-    bytes[6]  = (obv & 0xff0000)   >> 16;
-    bytes[5]  = (obv & 0xff00)     >> 8;
-    bytes[4]  = (obv & 0xff);
+    bytes[7]  = (observation & 0xff000000) >> 24;
+    bytes[6]  = (observation & 0xff0000)   >> 16;
+    bytes[5]  = (observation & 0xff00)     >> 8;
+    bytes[4]  = (observation & 0xff);
     return bytes;
 }
 

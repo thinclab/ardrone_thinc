@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     ArdroneThinc at; 
    
     // handle usage
-    if (argc != 3) {
+    if (argc != 6) {
         cout << "usage: ";
         cout << argv[0];
         cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
 
     // let roscore catch up
     ros::Duration(1.0).sleep();
+
+//    at.rocket_socket(); 
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {

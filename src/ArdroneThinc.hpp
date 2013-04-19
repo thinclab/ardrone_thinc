@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
 
 using namespace std; 
 
@@ -89,7 +90,7 @@ class ArdroneThinc {
         //socket stuff
         unsigned char* pack(int, int);
         Msg_Cmd unpack(unsigned char*);
-        void rocket_socket(void);
+        void rocket_socket(int, char*, int);
 };
 
 #endif
