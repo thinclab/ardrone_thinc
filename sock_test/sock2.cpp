@@ -51,16 +51,13 @@ int main(int argc, char *argv[]) {
     for (;;) {
         len = sizeof(cliaddr);
         msg = s2->pack(4, 3, 2, 1); 
-//        n = 16; //16 bytes in a 4 int message
         int s = sendto(sockfd, msg, 16, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
         if (s < 0) {
             perror("sendto"); 
             exit(1); 
         }
         printf("\n-------------------------------------------------------\n");
-//        msg[n] = 0;
         printf("Sock2 Sent:\n4 3 2 1");
-//        printf("%s", msg);
         printf("\n-------------------------------------------------------\n");
 
         struct sockaddr_in incoming; 
@@ -75,7 +72,7 @@ int main(int argc, char *argv[]) {
         buf[n] = 0; 
         cmd = s2->unpack(buf);
         printf("Sock2 Received: \n"); 
-        printf("x: %d, y: %d, z: %d, id: %d", cmd.x, cmd.y, cmd.z, cmd.id);
+        printf("suc: %d, obs: %d, z: %d, id: %d", cmd.x, cmd.y, cmd.z, cmd.id);
 
    
     }
@@ -91,8 +88,8 @@ Msg_Cmd sock2::unpack(unsigned char* bytes) {
     Msg_Cmd res;
     res.x = bytes[3] << 24  | bytes[2] << 16  | bytes[1] << 8 | bytes[0];
     res.y = bytes[7] << 24  | bytes[6] << 16  | bytes[5] << 8 | bytes[4];
-    res.z = bytes[11] << 24 | bytes[10] << 16 | bytes[9] << 8 | bytes[8];
-    res.id = bytes[15] << 24 | bytes[14] << 16 | bytes[13] << 8 | bytes[12];
+    res.z = 0;
+    res.id = 0;
     return res;
 }
 

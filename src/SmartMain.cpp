@@ -42,13 +42,18 @@ int main(int argc, char *argv[]) {
     ArdroneThinc at; 
    
     // handle usage
-    if (argc != 6) {
+    if (argc != 9) {
         cout << "usage: ";
         cout << argv[0];
-        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
+        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row> <port> <remote ip> <remote port>";
         cout << endl;
         exit(1); 
     }
+
+    // socket communication
+    int port = atoi(argv[6]); 
+    char *remote_ip = argv[7]; 
+    int remote_port = atoi(argv[8]); 
 
     // grid size
     at.columns = atoi(argv[1]);
@@ -84,7 +89,7 @@ int main(int argc, char *argv[]) {
     // let roscore catch up
     ros::Duration(1.0).sleep();
 
-//    at.rocket_socket(); 
+    at.rocket_socket(port, remote_ip, remote_port); 
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {

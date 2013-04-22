@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
     cliaddr.sin_port = htons(remote_port);
     
     for (;;) {
-//        len = sizeof(cliaddr);
         unsigned char buf[100];
         struct sockaddr_in incoming; 
         unsigned int socklen = sizeof(incoming); 
@@ -59,15 +58,13 @@ int main(int argc, char *argv[]) {
             exit(1); 
         }
         buf[n] = 0; 
-//        cmd = s1->unpack(msg);
         printf("\n-------------------------------------------------------\n");
-//        msg[n] = 0;
         printf("Sock1 Received:\n");
         cmd = s1->unpack(buf); 
         printf("x: %d, y: %d, z: %d, id: %d", cmd.x, cmd.y, cmd.z, cmd.id);
         printf("\n-------------------------------------------------------\n");
-        msg = s1->pack(4, 3, 2, 1); 
-        sendto(sockfd, msg, 16, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        msg = s1->pack(0, 1); 
+        sendto(sockfd, msg, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
         printf("Sock1 Sent back a message"); 
     }
 
@@ -90,7 +87,7 @@ Msg_Cmd sock1::unpack(unsigned char* bytes) {
 /* 
  * Pack the return message.
  */
-unsigned char* sock1::pack(int x, int y, int z, int id) {
+unsigned char* sock1::pack(int x, int y) {
     unsigned char bytes[16];
     bytes[3]  = (x & 0xff000000) >> 24;
     bytes[2]  = (x & 0xff0000)   >> 16;
@@ -100,14 +97,6 @@ unsigned char* sock1::pack(int x, int y, int z, int id) {
     bytes[6]  = (y & 0xff0000)   >> 16;
     bytes[5]  = (y & 0xff00)     >> 8;
     bytes[4]  = (y & 0xff);
-    bytes[11]  = (z & 0xff000000) >> 24;
-    bytes[10]  = (z & 0xff0000)   >> 16;
-    bytes[9]  = (z & 0xff00)     >> 8;
-    bytes[8]  = (z & 0xff);
-    bytes[15]  = (id & 0xff000000) >> 24;
-    bytes[14]  = (id & 0xff0000)   >> 16;
-    bytes[13]  = (id & 0xff00)     >> 8;
-    bytes[12]  = (id & 0xff);
 
     return bytes;
 }
