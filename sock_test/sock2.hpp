@@ -9,8 +9,6 @@
 #include <string.h>
 
 #include <netdb.h>
-//#include <sys/types.h>
-//#include <arpa/inet.h>
 
 using namespace std;
 
@@ -24,7 +22,7 @@ struct Msg_Cmd {
 
 class sock2 {
     public: 
-        Msg_Cmd unpack(unsigned char*);
+        int* unpack(unsigned char*);
         unsigned char* pack(int, int, int, int);
 };
 

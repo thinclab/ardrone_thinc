@@ -42,10 +42,10 @@ int main(int argc, char *argv[]) {
     ArdroneThinc at; 
    
     // handle usage
-    if (argc != 6) {
+    if (argc != 9) {
         cout << "usage: ";
         cout << argv[0];
-        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
+        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row> <local port> <remote ip> <remote port>";
         cout << endl;
         exit(1); 
     }
@@ -58,6 +58,11 @@ int main(int argc, char *argv[]) {
     at.id = atoi(argv[3]);
     at.x = atoi(argv[4]);
     at.y = atoi(argv[5]);
+
+    // socket info
+    at.local_port = atoi(argv[6]);
+    at.remote_ip = argv[7]; 
+    at.remote_port = atoi(argv[8]); 
     
     // publishers
     at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
@@ -84,7 +89,7 @@ int main(int argc, char *argv[]) {
     // let roscore catch up
     ros::Duration(1.0).sleep();
 
-//    at.rocket_socket(); 
+    at.rocket_socket(at.local_port, at.remote_ip, at.remote_port); 
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {
@@ -102,6 +107,7 @@ int main(int argc, char *argv[]) {
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
         at.launch_pub.publish(at.empty_msg);
+        cout << "taking off!" << endl; 
     } 
     
     ros::spin();

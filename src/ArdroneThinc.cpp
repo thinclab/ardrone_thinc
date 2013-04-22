@@ -210,18 +210,21 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
     int b = bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
     if (b < 0)
         perror("bind failed"); 
-
+    
     cliaddr.sin_family = AF_INET;
     cliaddr.sin_addr = *addressptr;
     cliaddr.sin_port = htons(remote_port_no);
-
     for (;;) {
         len = sizeof(cliaddr);
-        n = recvfrom(sockfd, &msg_in, 100, 0, (struct sockaddr*)&cliaddr, &len);
+        cout << "pre-recvfrom..." << endl; 
+        n = recvfrom(sockfd, &msg_in, 17, 0, (struct sockaddr*)&cliaddr, &len);       
+        cout << "recvfrom..." << endl; 
         if (n < 0) 
             perror("recvfrom failed");
         msg_in[n] = 0; 
+        cout << "msg[n]" << endl; 
         cmd = unpack(msg_in);
+        cout << "unpack" << endl; 
 
         ardrone_thinc::Waypoint waypoint_msg; 
         waypoint_msg.request.x = cmd.x; 
@@ -230,8 +233,14 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
         waypoint_msg.request.id = cmd.id; 
         waypoint_cli.call(waypoint_msg); 
 
+        cout << "waypoint stuff" << endl; 
         msg_out = pack(suc, obs);
-        sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        int s = sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        if (s < 0) {
+            perror("sendto"); 
+            exit(1); 
+        }
+        cout << "sendto" << endl; 
     }
 
 }

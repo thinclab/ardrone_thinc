@@ -91,6 +91,9 @@ class ArdroneThinc {
         unsigned char* pack(int, int);
         Msg_Cmd unpack(unsigned char*);
         void rocket_socket(int, char*, int);
+        int local_port;
+        char* remote_ip; 
+        int remote_port;
 };
 
 #endif
