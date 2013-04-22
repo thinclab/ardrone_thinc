@@ -215,7 +215,7 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
     cout << "bind" << endl; 
     if (b < 0)
         perror("bind failed"); 
-
+    
     cliaddr.sin_family = AF_INET;
     cliaddr.sin_addr = *addressptr;
     cliaddr.sin_port = htons(remote_port_no);
@@ -223,12 +223,13 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
 
     for (;;) {
         len = sizeof(cliaddr);
-        cout << "sizeof cliaddr" << endl; 
-        n = recvfrom(sockfd, &msg_in, 1000, 0, (struct sockaddr*)&cliaddr, &len);
-        cout << "recvfrom" << endl; 
+        cout << "pre-recvfrom..." << endl; 
+        n = recvfrom(sockfd, &msg_in, 17, 0, (struct sockaddr*)&cliaddr, &len);       
+        cout << "recvfrom..." << endl; 
         if (n < 0) 
             perror("recvfrom failed");
         msg_in[n] = 0; 
+        cout << "msg[n]" << endl; 
         cmd = unpack(msg_in);
         cout << "unpack" << endl; 
 
@@ -245,7 +246,11 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
         obs = 0; 
         msg_out = pack(suc, obs);
         cout << "pack" << endl; 
-        sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        int s = sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        if (s < 0) {
+            perror("sendto"); 
+            exit(1); 
+        }
         cout << "sendto" << endl; 
     }
 

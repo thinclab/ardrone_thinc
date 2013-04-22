@@ -1,5 +1,7 @@
 #include "sock2.hpp"
 
+// test file to control the drones
+
 int main(int argc, char *argv[]) {
     if (argc != 4) {
         fprintf(stderr, "requires local port, remote ip, and remote port\n");
@@ -17,7 +19,8 @@ int main(int argc, char *argv[]) {
     in_addr * addressptr = (in_addr *) record->h_addr;
 
     sock2* s2 = new sock2(); 
-    struct Msg_Cmd cmd;
+//    struct Msg_Cmd cmd;
+    int *response;
     int sockfd;
     int n;
     struct sockaddr_in servaddr;
@@ -48,16 +51,36 @@ int main(int argc, char *argv[]) {
 
     unsigned char buf[100];
 
-    for (;;) {
+    for (int i = 0; i < 5; i++) {
         len = sizeof(cliaddr);
-        msg = s2->pack(4, 3, 2, 1); 
+        //msg = s2->pack(4, 3, 2, 1); 
+        switch (i) {
+            case 0:
+                msg = s2->pack(1, 1, 1, 0);
+                break; 
+            case 1: 
+                msg = s2->pack(9, 9, 1, 1); 
+                break; 
+            case 2: 
+                msg = s2->pack(5, 5, 1, 0); 
+                break; 
+            case 3: 
+                msg = s2->pack(3, 6, 1, 1); 
+                break; 
+            case 4:
+                msg = s2->pack(8, 2, 1, 0); 
+                break; 
+        }
+
         int s = sendto(sockfd, msg, 16, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
         if (s < 0) {
             perror("sendto"); 
             exit(1); 
         }
-        printf("\n-------------------------------------------------------\n");
-        printf("Sock2 Sent:\n4 3 2 1");
+        printf("-------------------------------------------------------\n");
+//        msg[n] = 0;
+        printf("Sock2 sent a message");
+//        printf("%s", msg);
         printf("\n-------------------------------------------------------\n");
 
         struct sockaddr_in incoming; 
@@ -70,9 +93,9 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         buf[n] = 0; 
-        cmd = s2->unpack(buf);
+        response = s2->unpack(buf);
         printf("Sock2 Received: \n"); 
-        printf("suc: %d, obs: %d, z: %d, id: %d", cmd.x, cmd.y, cmd.z, cmd.id);
+        printf("success: %d, observation: %d", response[0], response[1]);
 
    
     }
@@ -84,12 +107,10 @@ int main(int argc, char *argv[]) {
  * Unpack the message we receive. Parse it into a message
  * command to later translate into a waypoint service call.
  */
-Msg_Cmd sock2::unpack(unsigned char* bytes) {
-    Msg_Cmd res;
-    res.x = bytes[3] << 24  | bytes[2] << 16  | bytes[1] << 8 | bytes[0];
-    res.y = bytes[7] << 24  | bytes[6] << 16  | bytes[5] << 8 | bytes[4];
-    res.z = 0;
-    res.id = 0;
+int* sock2::unpack(unsigned char* bytes) {
+    int res[2];
+    res[0] = bytes[3] << 24  | bytes[2] << 16  | bytes[1] << 8 | bytes[0];
+    res[1] = bytes[7] << 24  | bytes[6] << 16  | bytes[5] << 8 | bytes[4];
     return res;
 }
 
