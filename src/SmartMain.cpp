@@ -69,10 +69,10 @@ int main(int argc, char *argv[]) {
     at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
     at.reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
     at.twist_pub = n.advertise<Twist>("cmd_vel", 10);
-    at.thresh_pub = n.advertise<Image>("img_thresh", 10);
+    at.thresh_pub = n.advertise<sensor_msgs::Image>("img_thresh", 10);
 
     // subscribers
-    at.cam_sub = n.subscribe<Image>("ardrone/bottom/image_raw", 1,
+    at.cam_sub = n.subscribe<Image>("ardrone/bottom/ardrone/bottom/image_raw", 1,
             &ArdroneThinc::CamCallback, &at);
     at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1,
             &ArdroneThinc::NavdataCallback, &at);
@@ -88,8 +88,6 @@ int main(int argc, char *argv[]) {
 
     // let roscore catch up
     ros::Duration(1.0).sleep();
-
-    at.rocket_socket(at.local_port, at.remote_ip, at.remote_port); 
 
     // set camchannel on drone and takeoff
     if(ros::ok()) {
@@ -107,7 +105,15 @@ int main(int argc, char *argv[]) {
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
         at.launch_pub.publish(at.empty_msg);
-        cout << "taking off!" << endl; 
+        
+        ardrone_thinc::Waypoint waypoint_msg;
+        waypoint_msg.request.x = 9; 
+        waypoint_msg.request.y = 9; 
+        waypoint_msg.request.z = 1; 
+        waypoint_msg.request.id = 0; 
+        at.waypoint_cli.call(waypoint_msg); 
+        // start listening on socket
+//        at.rocket_socket(at.local_port, at.remote_ip, at.remote_port);
     } 
     
     ros::spin();

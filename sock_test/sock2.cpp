@@ -7,6 +7,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "requires local port, remote ip, and remote port\n");
         exit(1); 
     }
+
     int port_number = atol(argv[1]); //local port to run on
     char* remote = argv[2]; //remote ip address
     int remote_port = atol(argv[3]); //remote port to run on
@@ -49,10 +50,9 @@ int main(int argc, char *argv[]) {
     cliaddr.sin_addr = *addressptr; 
     cliaddr.sin_port = htons(remote_port); 
 
-    unsigned char buf[100];
+    unsigned char buf[1024];
 
     for (int i = 0; i < 5; i++) {
-        len = sizeof(cliaddr);
         //msg = s2->pack(4, 3, 2, 1); 
         switch (i) {
             case 0:
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
                 break; 
         }
 
-        int s = sendto(sockfd, msg, 16, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        int s = sendto(sockfd, msg, 17, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
         if (s < 0) {
             perror("sendto"); 
             exit(1); 
@@ -84,19 +84,19 @@ int main(int argc, char *argv[]) {
         printf("\n-------------------------------------------------------\n");
 
         struct sockaddr_in incoming; 
-        unsigned int socklen = sizeof(incoming);
+        len = sizeof(incoming);
 
 
-        n = recvfrom(sockfd, &buf, sizeof(buf)-1, 0, (struct sockaddr*)&incoming, &socklen);
+        n = recvfrom(sockfd, buf, sizeof(buf)-1, 0, (struct sockaddr*)&incoming, &len);
         if (n < 0) {
             perror("recvfrom"); 
             exit(1);
         }
-        buf[n] = 0; 
+
+//        buf[n] = 0; 
         response = s2->unpack(buf);
         printf("Sock2 Received: \n"); 
         printf("success: %d, observation: %d", response[0], response[1]);
-
    
     }
 

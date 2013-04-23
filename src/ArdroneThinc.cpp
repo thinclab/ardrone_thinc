@@ -34,6 +34,44 @@ using ardrone_thinc::Waypoint;
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
+/*
+    // convert ros image to opencv image
+    cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
+    cv_bridge::CvImagePtr grey(new cv_bridge::CvImage());
+
+    // resize image (faster processing);
+    int new_h = orig->image.size.p[0];
+    int new_w = (new_h*orig->image.size.p[1])/orig->image.size.p[0];
+    resize(orig->image, orig->image, Size(new_w, new_h), 0, 0);
+
+    // detect circles using hough transform
+    cvtColor(orig->image, grey->image, CV_RGB2GRAY); // rgb -> grey
+    GaussianBlur(grey->image, grey->image, Size(3, 3), 2, 2); // denoise
+    vector<cv::Vec3f> c;
+
+    HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 100, 50); //220 120
+
+// HoughCircles(grey->image, c, CV_HOUGH_GRADIENT, 2, 2, 150, 30); //220 120
+
+    img_vec = c;
+    Point avg_center; // grab from laptop code
+    for(size_t i = 0; i < c.size(); i++) {
+        Point center(cvRound(c[i][0]), cvRound(c[i][1]));
+        int radius = cvRound(c[i][2]);
+        avg_center += (Point(c[i][0], c[i][1]) - avg_center)*(1.0/(i+1));
+        circle(orig->image, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+        circle(orig->image, center, radius, Scalar(0, 0, 255), 3, 8, 0);
+    }
+
+    double height = sonar/sqrt(1+tan(D2R(rotx))*tan(D2R(rotx))+tan(D2R(roty))*tan(D2R(roty)));
+    Point over(height*sin(D2R(rotx)), height*sin(D2R(roty)));
+// cout << "height: " << height << endl;
+// cout << "over: " << over << endl;
+
+    // convert opencv image to ros image and publish
+    thresh_pub.publish(orig->toImageMsg());
+
+*/
     // not implemented yet
     //if(!stabilize) return;
 
@@ -88,6 +126,8 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //else if(yp < LB) twist_msg.linear.x = VEL;
     //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
     //twist.publish(twist_msg);
+
+
 }
 
 // collect navdata
@@ -99,8 +139,10 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
 
 // move to designated sector
 bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+    cout << "waypoint callback!" << endl; 
+
     // ensure valid grid cell
-    if(this->x>0 && this->y>0 && this->x<this->columns && this->y<this->rows) {
+    if(req.x<0 || req.y<0 || req.x>=this->columns || req.y>=this->rows) {
         res.success = false; 
         return false; 
     }
@@ -110,11 +152,11 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
     int dy = this->y - req.y;
 
     // move: x first, then y
-    while(ros::ok() && dx && dy) {
+    while(ros::ok() && (dx || dy)) {
         if(dx > 0) { 
-            move(LEFT); dx--; //dy--
+            move(LEFT); dx--; 
         } else if(dx < 0) { 
-            move(RIGHT); dx--; //dy++
+            move(RIGHT); dx++;
         } else if(dy < 0) { 
             move(UP); dy++; 
         } else if(dy > 0) {
@@ -133,6 +175,8 @@ void ArdroneThinc::move(enum dir d) {
      * -linear.y: move right
      * +linear.y: move left
      */
+
+    cout << "move" << endl; 
 
     switch(d) {
         case LEFT: 
@@ -163,6 +207,11 @@ void ArdroneThinc::move(enum dir d) {
     while (!this->circles.empty());
     while (this->circles.empty());
 
+/*    while (img_vec.empty());
+    while (!img_vec.empty());
+    while (img_vec.empty());*/
+
+
     // stop
     this->twist_msg.linear.x = 0; 
     this->twist_msg.linear.y = 0; 
@@ -178,14 +227,12 @@ void ArdroneThinc::move(enum dir d) {
  * number, remote ip, and remote port number.
  */
 void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_no) {
-    cout << "rocket_socket" << endl; 
     hostent * record = gethostbyname(remote_ip);
     if (record == NULL) {
         herror("gethostbyname failed");
         exit(1);
     }
     in_addr * addressptr = (in_addr *) record->h_addr;
-    cout << "record created" << endl; 
 
     struct Msg_Cmd cmd;
     int sockfd;
@@ -193,65 +240,65 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
     struct sockaddr_in servaddr;
     struct sockaddr_in cliaddr;
     socklen_t len;
-    unsigned char* msg_in; //message received
-    unsigned char* msg_out; //message sent
+    unsigned char msg_in[1024]; //message received
+    unsigned char* msg_out = (unsigned char*)malloc(16*sizeof(char)); //message sent
     int suc; //success value
     int obs; //observation value
 
     sockfd=socket(AF_INET, SOCK_DGRAM, 0);
-    cout << "socket created" << endl; 
-    if (sockfd < 0)
+    if (sockfd < 0) {
         perror("socket creation");
+        exit(1); 
+    }
 
     bzero(&servaddr, sizeof(servaddr));
-    cout << "bzero" << endl; 
+//    bzero(&cliaddr, sizeof(cliaddr)); 
 
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port_no);
-    cout << "servaddr" << endl; 
 
     int b = bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
-    cout << "bind" << endl; 
-    if (b < 0)
+    if (b < 0) {
         perror("bind failed"); 
+        exit(1); 
+    }
     
     cliaddr.sin_family = AF_INET;
     cliaddr.sin_addr = *addressptr;
     cliaddr.sin_port = htons(remote_port_no);
-    cout << "cliaddr" << endl; 
 
     for (;;) {
         len = sizeof(cliaddr);
-        cout << "pre-recvfrom..." << endl; 
-        n = recvfrom(sockfd, &msg_in, 17, 0, (struct sockaddr*)&cliaddr, &len);       
-        cout << "recvfrom..." << endl; 
-        if (n < 0) 
+        n = recvfrom(sockfd, msg_in, sizeof(msg_in)-1, 0, (struct sockaddr*)&cliaddr, &len);
+        if (n < 0) {
             perror("recvfrom failed");
-        msg_in[n] = 0; 
-        cout << "msg[n]" << endl; 
+            exit(1); 
+        }
+       
+        cout << "ArdroneThinc received a message..." << endl;
+//        msg_in[n] = 0; 
         cmd = unpack(msg_in);
-        cout << "unpack" << endl; 
+        cout << "x: " << cmd.x << " y: " << cmd.y << " z: " << cmd.z << " id: " << cmd.id << endl; 
 
         ardrone_thinc::Waypoint waypoint_msg; 
         waypoint_msg.request.x = cmd.x; 
         waypoint_msg.request.y = cmd.y; 
         waypoint_msg.request.z = cmd.z; 
         waypoint_msg.request.id = cmd.id; 
-        waypoint_cli.call(waypoint_msg); 
-        cout << "waypoint msg" << endl; 
+        waypoint_cli.call(waypoint_msg);
+        sleep(5);  
 
         //get values of suc and obs
-        suc = 1; 
-        obs = 0; 
+        suc = 12; 
+        obs = 4; 
         msg_out = pack(suc, obs);
-        cout << "pack" << endl; 
-        int s = sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        int s = sendto(sockfd, msg_out, 9, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
         if (s < 0) {
             perror("sendto"); 
             exit(1); 
         }
-        cout << "sendto" << endl; 
+        cout << "ArdroneThinc sent a message" << endl; 
     }
 
 }

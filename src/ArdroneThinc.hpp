@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
+#include <pthread.h>
 
 using namespace std; 
 
@@ -94,6 +95,8 @@ class ArdroneThinc {
         int local_port;
         char* remote_ip; 
         int remote_port;
+
+        vector<cv::Vec3f> img_vec;
 };
 
 #endif
