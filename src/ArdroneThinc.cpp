@@ -34,7 +34,7 @@ using ardrone_thinc::Waypoint;
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
-/*
+
     // convert ros image to opencv image
     cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
     cv_bridge::CvImagePtr grey(new cv_bridge::CvImage());
@@ -71,7 +71,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     // convert opencv image to ros image and publish
     thresh_pub.publish(orig->toImageMsg());
 
-*/
+/*
     // not implemented yet
     //if(!stabilize) return;
 
@@ -113,7 +113,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     Point avg_center_mm(height*tan(w_angle), height*tan(h_angle));
     Point move = over - avg_center_mm;
 
-    cout << "move: " << move << endl;
+//    cout << "move: " << move << endl;
 
     // convert opencv image to ros image and publish
     this->thresh_pub.publish(orig->toImageMsg());
@@ -126,7 +126,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     //else if(yp < LB) twist_msg.linear.x = VEL;
     //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
     //twist.publish(twist_msg);
-
+*/
 
 }
 
@@ -142,7 +142,7 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
     cout << "waypoint callback!" << endl; 
 
     // ensure valid grid cell
-    if(req.x<0 || req.y<0 || req.x>=this->columns || req.y>=this->rows) {
+    if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows) {
         res.success = false; 
         return false; 
     }
@@ -203,14 +203,12 @@ void ArdroneThinc::move(enum dir d) {
     this->twist_pub.publish(this->twist_msg); 
   
     // wait until we see a circle again
-    while (this->circles.empty());
+/*    while (this->circles.empty());
     while (!this->circles.empty());
-    while (this->circles.empty());
-
-/*    while (img_vec.empty());
-    while (!img_vec.empty());
-    while (img_vec.empty());*/
-
+    while (this->circles.empty());*/
+    while (img_vec.empty()); 
+    while (!img_vec.empty()); 
+    while (img_vec.empty()); 
 
     // stop
     this->twist_msg.linear.x = 0; 
@@ -227,6 +225,7 @@ void ArdroneThinc::move(enum dir d) {
  * number, remote ip, and remote port number.
  */
 void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_no) {
+
     hostent * record = gethostbyname(remote_ip);
     if (record == NULL) {
         herror("gethostbyname failed");
@@ -240,10 +239,10 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
     struct sockaddr_in servaddr;
     struct sockaddr_in cliaddr;
     socklen_t len;
-    unsigned char msg_in[1024]; //message received
-    unsigned char* msg_out = (unsigned char*)malloc(16*sizeof(char)); //message sent
-    int suc; //success value
-    int obs; //observation value
+    unsigned char msg_in[100]; //message received
+    unsigned char* msg_out; //message sent
+    int suc=12; //success value
+    int obs=8; //observation value
 
     sockfd=socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
@@ -252,8 +251,6 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
     }
 
     bzero(&servaddr, sizeof(servaddr));
-//    bzero(&cliaddr, sizeof(cliaddr)); 
-
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port_no);
@@ -277,23 +274,21 @@ void ArdroneThinc::rocket_socket(int port_no, char* remote_ip, int remote_port_n
         }
        
         cout << "ArdroneThinc received a message..." << endl;
-//        msg_in[n] = 0; 
         cmd = unpack(msg_in);
         cout << "x: " << cmd.x << " y: " << cmd.y << " z: " << cmd.z << " id: " << cmd.id << endl; 
 
-        ardrone_thinc::Waypoint waypoint_msg; 
+/*        ardrone_thinc::Waypoint waypoint_msg; 
         waypoint_msg.request.x = cmd.x; 
         waypoint_msg.request.y = cmd.y; 
         waypoint_msg.request.z = cmd.z; 
         waypoint_msg.request.id = cmd.id; 
         waypoint_cli.call(waypoint_msg);
-        sleep(5);  
+        sleep(5);  */
 
         //get values of suc and obs
-        suc = 12; 
-        obs = 4; 
+
         msg_out = pack(suc, obs);
-        int s = sendto(sockfd, msg_out, 9, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        int s = sendto(sockfd, msg_out, 8, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
         if (s < 0) {
             perror("sendto"); 
             exit(1); 

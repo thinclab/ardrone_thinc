@@ -69,11 +69,11 @@ int main(int argc, char *argv[]) {
     at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
     at.reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
     at.twist_pub = n.advertise<Twist>("cmd_vel", 10);
-    at.thresh_pub = n.advertise<sensor_msgs::Image>("img_thresh", 10);
+    at.thresh_pub = n.advertise<Image>("img_thresh", 10);
 
     // subscribers
-    at.cam_sub = n.subscribe<Image>("ardrone/bottom/ardrone/bottom/image_raw", 1,
-            &ArdroneThinc::CamCallback, &at);
+    at.cam_sub = n.subscribe<Image>("ardrone/bottom/ardrone/bottom/image_raw",
+            1, &ArdroneThinc::CamCallback, &at);
     at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1,
             &ArdroneThinc::NavdataCallback, &at);
 
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
         waypoint_msg.request.id = 0; 
         at.waypoint_cli.call(waypoint_msg); 
         // start listening on socket
-//        at.rocket_socket(at.local_port, at.remote_ip, at.remote_port);
+        at.rocket_socket(at.local_port, at.remote_ip, at.remote_port);
     } 
     
     ros::spin();
