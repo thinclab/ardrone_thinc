@@ -30,3 +30,4 @@ rosbuild_gensrv()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_executable(thinc_smart src/SmartMain.cpp src/ArdroneThinc.cpp)
+rosbuild_add_executable(thinc_sock src/SocketMain.cpp)

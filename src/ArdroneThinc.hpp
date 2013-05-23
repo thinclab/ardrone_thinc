@@ -40,13 +40,6 @@ using ardrone_thinc::Waypoint;
 // move enum
 enum dir { LEFT, RIGHT, UP, DOWN };
 
-struct Msg_Cmd {
-    int x;
-    int y;
-    int z;
-    int id;
-};
-
 class ArdroneThinc {
     public:
         // ros topics and services
@@ -87,14 +80,6 @@ class ArdroneThinc {
 
         // helper functions
         void move(enum dir d); 
-
-        //socket stuff
-        unsigned char* pack(int, int);
-        Msg_Cmd unpack(unsigned char*);
-        void rocket_socket(int, char*, int);
-        int local_port;
-        char* remote_ip; 
-        int remote_port;
 
         vector<cv::Vec3f> img_vec;
 };

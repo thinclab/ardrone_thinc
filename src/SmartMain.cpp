@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     if (argc != 9) {
         cout << "usage: ";
         cout << argv[0];
-        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row> <local port> <remote ip> <remote port>";
+        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
         cout << endl;
         exit(1); 
     }
@@ -59,11 +59,6 @@ int main(int argc, char *argv[]) {
     at.x = atoi(argv[4]);
     at.y = atoi(argv[5]);
 
-    // socket info
-    at.local_port = atoi(argv[6]);
-    at.remote_ip = argv[7]; 
-    at.remote_port = atoi(argv[8]); 
-    
     // publishers
     at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
     at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
@@ -112,8 +107,6 @@ int main(int argc, char *argv[]) {
         waypoint_msg.request.z = 1; 
         waypoint_msg.request.id = 0; 
         at.waypoint_cli.call(waypoint_msg); 
-        // start listening on socket
-        at.rocket_socket(at.local_port, at.remote_ip, at.remote_port);
     } 
     
     ros::spin();
