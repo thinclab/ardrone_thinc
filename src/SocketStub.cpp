@@ -19,7 +19,8 @@ using std::endl;
 
 int main(int argc, char **argv) {
     if(argc != 4) {
-        cout << "usage: " << argv[0] << " <remote-ip> <remote-port> <id>" << endl;
+        cout << "usage: " << argv[0];
+        cout << " <remote-ip> <remote-port> <id>" << endl;
         exit(1);
     }
 
