@@ -17,5 +17,5 @@ $ make
 Notes
 -----
 
-* For simulation, use https://github.com/dmillard/thing_simulator
-* Processed images are published to `thinc/thresh`.
+* This requires https://github.com/AutonomyLab/ardrone_autonomy
+* For simulation, use https://github.com/dmillard/thinc_simulator
