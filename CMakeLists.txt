@@ -31,3 +31,4 @@ rosbuild_gensrv()
 
 rosbuild_add_executable(thinc_smart src/SmartMain.cpp src/ArdroneThinc.cpp)
 rosbuild_add_executable(thinc_sock src/SocketMain.cpp)
+rosbuild_add_executable(sock_stub src/SocketStub.cpp)
