@@ -37,12 +37,13 @@ int main(int argc, char *argv[]) {
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
+    ros::AsyncSpinner spinner(2);
 
     // data container
     ArdroneThinc at; 
    
     // handle usage
-    if (argc != 9) {
+    if (argc != 6) {
         cout << "usage: ";
         cout << argv[0];
         cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
@@ -109,7 +110,8 @@ int main(int argc, char *argv[]) {
         at.waypoint_cli.call(waypoint_msg); 
     } 
     
-    ros::spin();
+    spinner.start();
+    ros::waitForShutdown();
 
     return 0;
 }

@@ -120,15 +120,17 @@ import struct
 
 
 class WaypointResponse(genpy.Message):
-  _md5sum = "3c2bcf2ff0894cb3058b1bf4c8c4175a"
+  _md5sum = "3cb41a2c4416de195dbb95b7777a06fb"
   _type = "ardrone_thinc/WaypointResponse"
   _has_header = False #flag to mark the presence of a Header object
-  _full_text = """int32 success
+  _full_text = """int32 x
+int32 y
+int32 z
 
 
 """
-  __slots__ = ['success']
-  _slot_types = ['int32']
+  __slots__ = ['x','y','z']
+  _slot_types = ['int32','int32','int32']
 
   def __init__(self, *args, **kwds):
     """
@@ -138,7 +140,7 @@ class WaypointResponse(genpy.Message):
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       success
+       x,y,z
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -147,10 +149,16 @@ class WaypointResponse(genpy.Message):
     if args or kwds:
       super(WaypointResponse, self).__init__(*args, **kwds)
       #message fields cannot be None, assign default values for those that are
-      if self.success is None:
-        self.success = 0
+      if self.x is None:
+        self.x = 0
+      if self.y is None:
+        self.y = 0
+      if self.z is None:
+        self.z = 0
     else:
-      self.success = 0
+      self.x = 0
+      self.y = 0
+      self.z = 0
 
   def _get_types(self):
     """
@@ -164,7 +172,8 @@ class WaypointResponse(genpy.Message):
     :param buff: buffer, ``StringIO``
     """
     try:
-      buff.write(_struct_i.pack(self.success))
+      _x = self
+      buff.write(_struct_3i.pack(_x.x, _x.y, _x.z))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -175,9 +184,10 @@ class WaypointResponse(genpy.Message):
     """
     try:
       end = 0
+      _x = self
       start = end
-      end += 4
-      (self.success,) = _struct_i.unpack(str[start:end])
+      end += 12
+      (_x.x, _x.y, _x.z,) = _struct_3i.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -190,7 +200,8 @@ class WaypointResponse(genpy.Message):
     :param numpy: numpy python module
     """
     try:
-      buff.write(_struct_i.pack(self.success))
+      _x = self
+      buff.write(_struct_3i.pack(_x.x, _x.y, _x.z))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -202,17 +213,18 @@ class WaypointResponse(genpy.Message):
     """
     try:
       end = 0
+      _x = self
       start = end
-      end += 4
-      (self.success,) = _struct_i.unpack(str[start:end])
+      end += 12
+      (_x.x, _x.y, _x.z,) = _struct_3i.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_i = struct.Struct("<i")
+_struct_3i = struct.Struct("<3i")
 class Waypoint(object):
   _type          = 'ardrone_thinc/Waypoint'
-  _md5sum = 'ee924ed92135816760f36b439216f4d2'
+  _md5sum = 'd210dc6be3edd3bce0a5b4a8ea086efb'
   _request_class  = WaypointRequest
   _response_class = WaypointResponse

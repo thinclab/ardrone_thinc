@@ -1,7 +1,7 @@
 all:  sock
 
-sock:	sock.hpp sock.cpp
-	g++ -o sock sock.cpp
+sock: SocketTest.cpp
+	g++ -o socket_test SocketTest.cpp
 
 clean: 
-	rm -f sock 
+	rm -f socket_test 

@@ -143,7 +143,6 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
     // ensure valid grid cell
     if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows) {
-        res.success = false; 
         return false; 
     }
 
@@ -164,7 +163,10 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
         }
     }
 
-    return (res.success = true);
+    res.x = this->x;
+    res.y = this->y;
+    res.z = 0;
+    return true;
 }
 
 // move in the direction given
@@ -206,9 +208,11 @@ void ArdroneThinc::move(enum dir d) {
 /*    while (this->circles.empty());
     while (!this->circles.empty());
     while (this->circles.empty());*/
-    while (img_vec.empty()); 
-    while (!img_vec.empty()); 
-    while (img_vec.empty()); 
+    //while (this->img_vec.empty()); 
+    //while (!this->img_vec.empty()); 
+    //while (this->img_vec.empty()); 
+    // stop-gap time-based motion
+    ros::Duration(8.2).sleep();
 
     // stop
     this->twist_msg.linear.x = 0; 
