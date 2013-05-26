@@ -19,6 +19,8 @@ Notes
 
 * This requires https://github.com/AutonomyLab/ardrone_autonomy
 * For simulation, use https://github.com/dmillard/thinc_simulator
+* If you want to write a program to control drones over UDP sockets, modify
+`src/SocketStub.cpp` to your tastes.
 
 Usage
 -----
