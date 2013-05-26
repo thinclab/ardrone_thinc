@@ -69,18 +69,14 @@ int main(int argc, char **argv) {
     while(true) {
         // read action
         char rbuf[BUFLEN], sbuf[BUFLEN];
-        int x, y, z, id;
+        int x, y, z;
         cout << "x: ";
         scanf("%d", &x); sbuf[0] = x;
         cout << "y: ";
         scanf("%d", &y); sbuf[1] = y;
         cout << "z: ";
         scanf("%d", &z); sbuf[2] = z;
-        cout << "id: ";
-        scanf("%d", &id); sbuf[3] = id;
-        cout << x << " " << y << " " << z << " " << id << endl;
-        cout << (int) sbuf[0] << " " << (int) sbuf[1] << " " << (int) sbuf[2] << " " << (int) sbuf[3] << endl;
-        if(sendto(s, sbuf, 4, 0, srv->ai_addr, srv->ai_addrlen) < 0) {
+        if(sendto(s, sbuf, 3, 0, srv->ai_addr, srv->ai_addrlen) < 0) {
             cout << "error sending to client" << endl;
             exit(1);
         }

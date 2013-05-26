@@ -79,30 +79,20 @@ int main(int argc, char **argv) {
     while(ros::ok()) {
         // read action
         char rbuf[BUFLEN];
-        if(recvfrom(s, rbuf, 4, 0, NULL, NULL) < 0) {
+        if(recvfrom(s, rbuf, 3, 0, NULL, NULL) < 0) {
             cout << "error receiving from client" << endl;
             exit(1);
         }
 
-        cout << (int) rbuf[0] << " ";
-        cout << (int) rbuf[1] << " ";
-        cout << (int) rbuf[2] << " ";
-        cout << (int) rbuf[3] << endl;
-        // execute with on thinc_smart
+        // execute on thinc_smart
         Waypoint waypoint;
         waypoint.request.x = rbuf[0];
         waypoint.request.y = rbuf[1];
         waypoint.request.z = rbuf[2];
-        waypoint.request.id = rbuf[3];
+        waypoint.request.id = id;
         way_cli.call(waypoint);
 
-
         char sbuf[BUFLEN];
-        //sbuf[0] = 97;
-        //sbuf[1] = 98;
-        //sbuf[2] = 99;
-        //sbuf[3] = 100;
-        //sbuf[4] = 0;
         sbuf[0] = waypoint.response.x;
         sbuf[1] = waypoint.response.y;
         sbuf[2] = waypoint.response.z;
