@@ -30,7 +30,11 @@ using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
 
+// MOVE_VEL is for use in the simulator
 #define MOVE_VEL 1
+
+// REAL_MOVE_VEL is for real world drones
+#define REAL_MOVE_VEL 0.1
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
@@ -103,7 +107,7 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
         return false; 
     }
 
-    // deltas
+    // calculate how many cells to move
     int dx = this->x - req.x;
     int dy = this->y - req.y;
 
@@ -155,13 +159,16 @@ void ArdroneThinc::move(enum dir d) {
             break;  
     }
  
-    // do it
+    // publish message to move
     this->twist_pub.publish(this->twist_msg); 
   
-    // stop-gap time-based motion
+    // stop-gap time-based motion, for simulator
     ros::Duration(2.1).sleep();
 
-    // stop
+		// stop-gap time-based motion, for real drones
+    //ros::Duration(1.5).sleep();
+
+    // stop moving and hover
     this->twist_msg.linear.x = 0; 
     this->twist_msg.linear.y = 0; 
     this->twist_msg.linear.z = 0; 

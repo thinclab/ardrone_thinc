@@ -67,20 +67,17 @@ int main(int argc, char *argv[]) {
     at.twist_pub = n.advertise<Twist>("cmd_vel", 10);
     at.thresh_pub = n.advertise<Image>("img_thresh", 10);
 
-    // subscribers
-    at.cam_sub = n.subscribe<Image>("ardrone/bottom/ardrone/bottom/image_raw",
-            1, &ArdroneThinc::CamCallback, &at);
-    at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1,
-            &ArdroneThinc::NavdataCallback, &at);
+	  // subscribers
+    at.cam_sub = n.subscribe<Image>("ardrone/bottom/image_raw", 1, &ArdroneThinc::CamCallback, &at);
+    at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, &at);
+    
+    // services
+    at.waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, &at);
 
     // service clients
     at.camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
     at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
-    at.waypoint_cli = n.serviceClient<Waypoint>("ardrone/waypoint"); 
-
-    // services
-    at.waypoint_srv = n.advertiseService("waypoint",
-            &ArdroneThinc::WaypointCallback, &at);
+    at.waypoint_cli = n.serviceClient<Waypoint>("waypoint"); 
 
     // let roscore catch up
     ros::Duration(1.0).sleep();
@@ -92,22 +89,22 @@ int main(int argc, char *argv[]) {
         camchan_req.request.channel = 1;
         at.camchan_cli.call(camchan_req);
 
-        // calibrate to flat surface
+        // call flat trim - calibrate to flat surface
         ssrv::Empty trim_req;
         at.trim_cli.call(trim_req);
 
-        // hover initially and launch
+        // takeoff and hover
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
+				at.twist_msg.angular.z = 0;
         at.launch_pub.publish(at.empty_msg);
         
         ardrone_thinc::Waypoint waypoint_msg;
-        waypoint_msg.request.x = 9; 
-        waypoint_msg.request.y = 9; 
-        waypoint_msg.request.z = 1; 
+        waypoint_msg.request.x = 0; 
+        waypoint_msg.request.y = 0; 
+        waypoint_msg.request.z = 0; 
         waypoint_msg.request.id = 0; 
-        at.waypoint_cli.call(waypoint_msg); 
     } 
     
     spinner.start();
