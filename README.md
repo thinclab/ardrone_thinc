@@ -28,7 +28,7 @@ Usage
 This package is designed to provide an endpoint for the Georgia Testbed for
 Autonomous Control (GaTAC), and allows grid based motion of ARDrone Parrot
 quadrotors over a UDP socket (or ROS service).  A simulator is available at
-https://github.com/dmillard/thinc_simulator.
+https://github.com/capparell/thinc_simulator.
 
 The main ROS node is called `thinc_smart`.  SMART stands for Simulator for the
 Motion of Autonomous Robotic Teams.
