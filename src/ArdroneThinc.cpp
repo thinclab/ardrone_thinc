@@ -165,7 +165,7 @@ void ArdroneThinc::move(enum dir d) {
     // stop-gap time-based motion, for simulator
     ros::Duration(2.1).sleep();
 
-		// stop-gap time-based motion, for real drones
+    // stop-gap time-based motion, for real drones
     //ros::Duration(1.5).sleep();
 
     // stop moving and hover

@@ -21,7 +21,7 @@ using ardrone_thinc::Waypoint;
 #define LOCALPORTBASE 5000
 
 int main(int argc, char **argv) {
-  // initialize a thinc_sock node with an anonymous name, so multiple instances can run at the same time (for multiple drones)
+        // initialize a thinc_sock node with an anonymous name, so multiple instances can run at the same time (for multiple drones)
 	ros::init(argc, argv, "thinc_sock", ros::init_options::AnonymousName);
 	ros::NodeHandle n;
 
@@ -86,20 +86,20 @@ int main(int argc, char **argv) {
 
 		Waypoint waypoint;
 
-	  // calculate integer coordinates of destination cell
+		// calculate integer coordinates of destination cell
 		int coords[3];
 		coords[0] = rbuf[0] - '0';
 		coords[1] = rbuf[1] - '0';
 		coords[2] = rbuf[2] - '0';
 
-	  // set waypoint parameters and call waypoint service
+		// set waypoint parameters and call waypoint service
 		waypoint.request.x = coords[0];
 		waypoint.request.y = coords[1];
 		waypoint.request.z = coords[2];
 		waypoint.request.id = id;
 		way_cli.call(waypoint);
 
-    // send waypoint response back
+		// send waypoint response back
 		char sbuf[BUFLEN];
 		sbuf[0] = waypoint.response.x;
 		sbuf[1] = waypoint.response.y;
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-  // close socket and clean up address information
+	// close socket and clean up address information
 	freeaddrinfo(srv);
 	freeaddrinfo(cli);
 	close(s);
