@@ -41,7 +41,7 @@ separate `sh` instance (for example, run each in a separate terminal emulator)
 1. Pick an id (hereafter \<id\>) for the drone (with start position
 \<drone-col\>, \<drone-row\>)
 2. `$ roscore` (if it is not already running)
-3. `$ ROS_NAMESPACE=drone\<id\> rosrun ardrone_thinc thinc_smart <num-cols> <num-rows> <id> <drone-col>
+3. `$ ROS_NAMESPACE=drone<id> rosrun ardrone_thinc thinc_smart <num-cols> <num-rows> <id> <drone-col>
 <drone-row>`
 4. `$ rosrun ardrone_thinc thinc\sock <GaTAC-ip> <GaTAC-port> <id>`
 
