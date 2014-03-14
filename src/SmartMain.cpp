@@ -14,6 +14,8 @@
 
 // C++
 #include <cstdlib>
+#include <stdio.h>
+#include <string.h>
 
 // ardrone_autonomy
 #include "ardrone_autonomy/CamSelect.h"
@@ -41,15 +43,20 @@ int main(int argc, char *argv[]) {
 
     // data container
     ArdroneThinc at; 
+    at.simDrones = false;
    
     // handle usage
-    if (argc != 6) {
+    if (argc != 7) {
         cout << "usage: ";
         cout << argv[0];
-        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row>";
+        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row> <if flying simulated drones, last argument is 's', else last argument is 'r'";
         cout << endl;
         exit(1); 
     }
+    if (argc == 7 && (strcmp(argv[6],"s") == 0))
+    {
+     //we are simulating	
+     at.simDrones = true;
 
     // grid size
     at.columns = atoi(argv[1]);
@@ -59,8 +66,22 @@ int main(int argc, char *argv[]) {
     at.id = atoi(argv[3]);
     at.x = atoi(argv[4]);
     at.y = atoi(argv[5]);
+    }
+    else {
+     //we are not simulating, these are real drones
+     at.simDrones = false;		
 
-    // publishers
+    // grid size
+    at.columns = atoi(argv[1]);
+    at.rows = atoi(argv[2]);
+
+    // initial position and id
+    at.id = atoi(argv[3]);
+    at.x = atoi(argv[4]);
+    at.y = atoi(argv[5]);
+    }
+    
+	// publishers
     at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
     at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
     at.reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);

@@ -63,6 +63,9 @@ class ArdroneThinc {
         int columns, rows; 
         int x_scale, y_scale; 
 
+	//Real or simulated drones	
+	bool simDrones;
+
         // grid position, interoperability id
         int x, y, id;
         

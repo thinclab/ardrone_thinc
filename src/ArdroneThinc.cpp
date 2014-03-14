@@ -137,7 +137,29 @@ void ArdroneThinc::move(enum dir d) {
     // +linear.x: move forward
     // -linear.y: move right
     // +linear.y: move left
-
+    if(simDrones == false){
+    switch(d) {
+        case LEFT: 
+            this->twist_msg.linear.y = REAL_MOVE_VEL; 
+            this->x--;
+            break; 
+        case RIGHT: 
+            this->twist_msg.linear.y = -REAL_MOVE_VEL;
+            this->x++;
+            break; 
+        case UP: 
+            this->twist_msg.linear.x = REAL_MOVE_VEL; 
+            this->y++;
+            break; 
+        case DOWN: 
+            this->twist_msg.linear.x = -REAL_MOVE_VEL;
+            this->y--;
+            break; 
+        default: 
+            break;  
+    }
+    }
+    else if(simDrones == true){
     switch(d) {
         case LEFT: 
             this->twist_msg.linear.y = MOVE_VEL; 
@@ -158,7 +180,7 @@ void ArdroneThinc::move(enum dir d) {
         default: 
             break;  
     }
- 
+    }
     // publish message to move
     this->twist_pub.publish(this->twist_msg); 
   
