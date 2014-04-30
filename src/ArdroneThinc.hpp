@@ -72,6 +72,7 @@ class ArdroneThinc {
         // callback persistent storage
         double rotx, roty;
         int sonar;
+        float batteryPercent, vx, vy, vz;
         vector<cv::Vec3f> circles; 
 
         // subscriber callbacks
@@ -83,6 +84,11 @@ class ArdroneThinc {
 
         // helper functions
         void move(enum dir d); 
+	string battery();
+	string forwardVelocity();
+	string sidewaysVelocity();
+	string verticalVelocity();
+	string sonar();
 
         vector<cv::Vec3f> img_vec;
 };

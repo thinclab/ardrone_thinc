@@ -38,7 +38,7 @@ using ardrone_thinc::Waypoint;
 
 // threshold images and adjust drone position accordingly
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
-
+/*	cout << "Entered cam callback method" << endl;
     // convert ros image to opencv image
     cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
     cv_bridge::CvImagePtr grey(new cv_bridge::CvImage());
@@ -78,16 +78,38 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     Point move = over - avg_center_mm;
 
     // convert opencv image to ros image and publish
-    this->thresh_pub.publish(orig->toImageMsg());
+    //this->thresh_pub.publish(orig->toImageMsg());
+    
+
+    double xp = move.x;
+    double yp = move.y;
     
     // center drone
-    //if(xp > UB) twist_msg.linear.y = -VEL;
-    //else if(xp < LB) twist_msg.linear.y = VEL;
-    //else if(LB < xp && xp < UB) twist_msg.linear.y = 0;
-    //if(yp > UB) twist_msg.linear.x = -VEL;
-    //else if(yp < LB) twist_msg.linear.x = VEL;
-    //else if(LB < yp && yp < UB) twist_msg.linear.x = 0;
-    //twist.publish(twist_msg);
+    if(xp > this->y) {
+	cout<< "if 1" << endl;
+	twist_msg.linear.y = -REAL_MOVE_VEL;
+    }
+    else if(xp < this->y) {
+	cout<< "if 2" << endl;
+	twist_msg.linear.y = REAL_MOVE_VEL;
+    }
+    else if(this->y < xp && xp < this->y) {
+	cout<< "if 3" << endl;
+	twist_msg.linear.y = 0;
+    }
+    if(yp > this->x) {
+	cout<< "if 4" << endl;
+	twist_msg.linear.x = -REAL_MOVE_VEL;
+    }
+    else if(yp < this->x) {
+	cout<< "if 5" << endl;
+	twist_msg.linear.x = REAL_MOVE_VEL;
+    }
+    else if(this->x < yp && yp < this->x) {
+	cout<< "if 6" << endl;
+	twist_msg.linear.x = 0;
+    }
+    twist_pub.publish(twist_msg);    */
 }
 
 // collect navdata
@@ -95,6 +117,10 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->rotx = nav->rotX;
     this->roty = nav->rotY;
     this->sonar = nav->altd;
+    this->batteryPercent = nav->batteryPercent;
+    this->vx = nav->vx;
+    this->vy = nav->vy;
+    this->vz = nav->vz;
 }
 
 // move to designated sector
@@ -126,7 +152,7 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
     res.x = this->x;
     res.y = this->y;
-    res.z = 0;
+    res.z = 0;  
     return true;
 }
 
@@ -185,15 +211,75 @@ void ArdroneThinc::move(enum dir d) {
     this->twist_pub.publish(this->twist_msg); 
   
     // stop-gap time-based motion, for simulator
+    if(simDrones == true)
     ros::Duration(2.1).sleep();
 
     // stop-gap time-based motion, for real drones
-    //ros::Duration(1.5).sleep();
+    if(simDrones == false)
+    ros::Duration(1.5).sleep();
 
     // stop moving and hover
     this->twist_msg.linear.x = 0; 
     this->twist_msg.linear.y = 0; 
     this->twist_msg.linear.z = 0; 
+    this->twist_msg.angular.x = 0; 
+    this->twist_msg.angular.y = 0; 
+    this->twist_msg.angular.z = 0; 
     this->twist_pub.publish(this->twist_msg);
     ros::Duration(2).sleep(); 
+}
+
+string ArdroneThinc::forwardVelocity()
+{
+    float forVelocConvert = this->vy;
+    stringstream ss (stringstream::in | stringstream::out);
+    ss << forVelocConvert;
+    string forVelocString = ss.str();
+    string returnString = "Forward velocity: " + forVelocString;
+
+    return returnString;
+}
+
+string ArdroneThinc::sidewaysVelocity()
+{
+    float sideVelocConvert = this->vx;
+    stringstream ss (stringstream::in | stringstream::out);
+    ss << sideVelocConvert;
+    string sideVelocString = ss.str();
+    string returnString = "Sideways velocity: " + sideVelocString;
+
+    return returnString;
+}
+
+string ArdroneThinc::verticalVelocity()
+{
+    float vertVelocConvert = this->vz;
+    stringstream ss (stringstream::in | stringstream::out);
+    ss << vertVelocConvert;
+    string vertVelocString = ss.str();
+    string returnString = "Vertical velocity: " + vertVelocString;
+
+    return returnString;
+}
+
+string ArdroneThinc::sonar()
+{
+    int sonarConvert = this->sonar;
+    stringstream ss (stringstream::in | stringstream::out);
+    ss << sonarConvert;
+    string sonarString = ss.str();
+    string returnString = "Sonar reading: " + sonarString;
+
+    return returnString;
+}
+
+string ArdroneThinc::battery()
+{
+    float batteryConvert = this->batteryPercent;
+    stringstream ss (stringstream::in | stringstream::out);
+    ss << batteryConvert;
+    string batteryString = ss.str();
+    string returnString = "Battery percent: " + batteryString;
+
+    return returnString;
 }
