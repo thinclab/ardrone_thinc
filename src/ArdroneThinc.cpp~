@@ -123,7 +123,6 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->vz = nav->vz;
 }
 
-//print navdata to client, used in gatac
 string ArdroneThinc::PrintNavdataCallback(const NavdataConstPtr& nav, int option) {
     if(option == 0)
     {
