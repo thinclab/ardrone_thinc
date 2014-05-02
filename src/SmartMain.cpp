@@ -89,16 +89,18 @@ int main(int argc, char *argv[]) {
     at.thresh_pub = n.advertise<Image>("img_thresh", 10);
 
     // subscribers
-    at.cam_sub = n.subscribe<Image>("ardrone/bottom/image_raw", 1, &ArdroneThinc::CamCallback, &at);
+    at.cam_sub = n.subscribe<Image>("ardrone/image_raw", 1, &ArdroneThinc::CamCallback, &at);
     at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, &at);
     
     // services
     at.waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, &at);
+    at.printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThinc::PrintNavdataCallback, &at);
 
     // service clients
     at.camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
     at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
     at.waypoint_cli = n.serviceClient<Waypoint>("waypoint"); 
+    at.printnavdata_cli = n.serviceClient<PrintNavdata>("printnavdata"); 
 
     // let roscore catch up
     ros::Duration(1.0).sleep();
@@ -118,6 +120,8 @@ int main(int argc, char *argv[]) {
         at.twist_msg.linear.x = 0;
         at.twist_msg.linear.y = 0;
         at.twist_msg.linear.z = 0;
+	at.twist_msg.angular.x = 0;
+	at.twist_msg.angular.y = 0;
 	at.twist_msg.angular.z = 0;
         at.launch_pub.publish(at.empty_msg);
         

@@ -12,6 +12,7 @@
 // services
 #include "ardrone_autonomy/Navdata.h"
 #include "ardrone_thinc/Waypoint.h"
+#include "ardrone_thinc/PrintNavdata.h"
 
 // persistent storage
 #include "opencv2/imgproc/imgproc.hpp"
@@ -36,6 +37,7 @@ using geometry_msgs::Twist;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
+using ardrone_thinc::PrintNavdata;
 
 // move enum
 enum dir { LEFT, RIGHT, UP, DOWN };
@@ -82,14 +84,10 @@ class ArdroneThinc {
         
         // service callbacks
         bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
+ 	string PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
 
         // helper functions
         void move(enum dir d); 
-	string battery();
-	string forwardVelocity();
-	string sidewaysVelocity();
-	string verticalVelocity();
-	string sonar();
 
         vector<cv::Vec3f> img_vec;
 };

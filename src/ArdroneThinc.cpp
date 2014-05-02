@@ -29,6 +29,7 @@ using std::endl;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
+using ardrone_thinc::PrintNavdata;
 
 // MOVE_VEL is for use in the simulator
 #define MOVE_VEL 1
@@ -124,30 +125,44 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
 }
 
 //print navdata to client, used in gatac
-string ArdroneThinc::PrintNavdataCallback(const NavdataConstPtr& nav, int option) {
-    if(option == 0)
+bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
+	int opt = req.option;
+	cout<< "Navdata print request, option "<< opt << endl;
+
+    if(opt == 0)
     {
+    float batteryConvert = this->batteryPercent;
+    stringstream ss (stringstream::in | stringstream::out);
+    ss << batteryConvert;
+    string batteryString = ss.str();
+    string returnString = "Battery percent: " + batteryString;
+	cout<< returnString<< endl;
+
+    }
+
+    else if(opt == 1)
+    {
+
     float forVelocConvert = this->vy;
     stringstream ss (stringstream::in | stringstream::out);
     ss << forVelocConvert;
     string forVelocString = ss.str();
     string returnString = "Forward velocity: " + forVelocString;
+	cout<< returnString<< endl;
 
-    return returnString;
     }
 
-    else if(option == 1)
+    else if(opt == 2)
     {
     float sideVelocConvert = this->vx;
     stringstream ss (stringstream::in | stringstream::out);
     ss << sideVelocConvert;
     string sideVelocString = ss.str();
     string returnString = "Sideways velocity: " + sideVelocString;
-
-    return returnString;
+	cout<< returnString<< endl;
     }
 
-    else if(option == 2)
+    else if(opt == 3)
     {
     float vertVelocConvert = this->vz;
     stringstream ss (stringstream::in | stringstream::out);
@@ -155,10 +170,10 @@ string ArdroneThinc::PrintNavdataCallback(const NavdataConstPtr& nav, int option
     string vertVelocString = ss.str();
     string returnString = "Vertical velocity: " + vertVelocString;
 
-    return returnString;
+	cout<< returnString<< endl;
     }
 
-    else if(option == 3)
+    else if(opt == 4)
     {
     int sonarConvert = this->sonar;
     stringstream ss (stringstream::in | stringstream::out);
@@ -166,19 +181,11 @@ string ArdroneThinc::PrintNavdataCallback(const NavdataConstPtr& nav, int option
     string sonarString = ss.str();
     string returnString = "Sonar reading: " + sonarString;
 
-    return returnString;
+	cout<< returnString<< endl;
     }
 
-    else if(option == 4)
-    {
-    float batteryConvert = this->batteryPercent;
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << batteryConvert;
-    string batteryString = ss.str();
-    string returnString = "Battery percent: " + batteryString;
 
-    return returnString;
-    }
+return true;
 }
 
 // move to designated sector
