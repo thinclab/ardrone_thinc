@@ -76,6 +76,7 @@ class ArdroneThinc {
         double rotx, roty;
         int sonar;
         float batteryPercent, vx, vy, vz;
+	string batteryCurrent, sonarCurrent, forwardVelocityCurrent, sidewaysVelocityCurrent, verticalVelocityCurrent;
         vector<cv::Vec3f> circles; 
 
         // subscriber callbacks

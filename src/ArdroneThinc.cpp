@@ -136,6 +136,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     ss << batteryConvert;
     string batteryString = ss.str();
     string returnString = "Battery percent: " + batteryString;
+	this->batteryCurrent = returnString;
 	cout<< returnString<< endl;
 
     }
@@ -148,6 +149,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     ss << forVelocConvert;
     string forVelocString = ss.str();
     string returnString = "Forward velocity: " + forVelocString;
+	this->forwardVelocityCurrent = returnString;
 	cout<< returnString<< endl;
 
     }
@@ -159,6 +161,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     ss << sideVelocConvert;
     string sideVelocString = ss.str();
     string returnString = "Sideways velocity: " + sideVelocString;
+	this->sidewaysVelocityCurrent = returnString;
 	cout<< returnString<< endl;
     }
 
@@ -169,7 +172,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     ss << vertVelocConvert;
     string vertVelocString = ss.str();
     string returnString = "Vertical velocity: " + vertVelocString;
-
+	this->verticalVelocityCurrent = returnString;
 	cout<< returnString<< endl;
     }
 
@@ -180,7 +183,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     ss << sonarConvert;
     string sonarString = ss.str();
     string returnString = "Sonar reading: " + sonarString;
-
+	this->sonarCurrent = returnString;
 	cout<< returnString<< endl;
     }
 

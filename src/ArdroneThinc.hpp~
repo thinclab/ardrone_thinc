@@ -76,6 +76,7 @@ class ArdroneThinc {
         double rotx, roty;
         int sonar;
         float batteryPercent, vx, vy, vz;
+	string batteryString, sonarString, forwardVelocityString, sidewaysVelocityString, verticalVelocityString;
         vector<cv::Vec3f> circles; 
 
         // subscriber callbacks
@@ -84,7 +85,7 @@ class ArdroneThinc {
         
         // service callbacks
         bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
- 	string PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+ 	bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
 
         // helper functions
         void move(enum dir d); 
