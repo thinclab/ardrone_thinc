@@ -17,7 +17,9 @@
 #include "ArdroneThinc.hpp"
 
 // misc
+#include <fstream>
 #include <cmath>
+#include <iostream>
 
 // degree to radian helper macro
 #define D2R(a) (a*M_PI/180)
@@ -186,8 +188,16 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
 	this->sonarCurrent = returnString;
 	cout<< returnString<< endl;
     }
-
-
+    ofstream file ("currentNavdata.txt");
+    if (file.is_open())
+    {
+    file << this->batteryCurrent <<"\n";
+    file << this->forwardVelocityCurrent <<"\n";
+    file << this->sidewaysVelocityCurrent <<"\n";
+    file << this->verticalVelocityCurrent <<"\n";
+    file << this->sonarCurrent <<"\n";
+ 
+    }
 return true;
 }
 
