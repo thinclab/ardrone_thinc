@@ -131,67 +131,46 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
 	int opt = req.option;
 	cout<< "Navdata print request, option "<< opt << endl;
 
-    if(opt == 0)
-    {
     float batteryConvert = this->batteryPercent;
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << batteryConvert;
-    string batteryString = ss.str();
-    string returnString = "Battery percent: " + batteryString;
-	this->batteryCurrent = returnString;
-	cout<< returnString<< endl;
-
-    }
-
-    else if(opt == 1)
-    {
+    stringstream ss0 (stringstream::in | stringstream::out);
+    ss0 << batteryConvert;
+    string batteryString = ss0.str();
+    this->batteryCurrent= "Battery percent: " + batteryString;
 
     float forVelocConvert = this->vy;
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << forVelocConvert;
-    string forVelocString = ss.str();
-    string returnString = "Forward velocity: " + forVelocString;
-	this->forwardVelocityCurrent = returnString;
-	cout<< returnString<< endl;
+    stringstream ss1 (stringstream::in | stringstream::out);
+    ss1 << forVelocConvert;
+    string forVelocString = ss1.str();
+    this->forwardVelocityCurrent  = "Forward velocity: " + forVelocString;
 
-    }
-
-    else if(opt == 2)
-    {
     float sideVelocConvert = this->vx;
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << sideVelocConvert;
-    string sideVelocString = ss.str();
-    string returnString = "Sideways velocity: " + sideVelocString;
-	this->sidewaysVelocityCurrent = returnString;
-	cout<< returnString<< endl;
-    }
+    stringstream ss2 (stringstream::in | stringstream::out);
+    ss2 << sideVelocConvert;
+    string sideVelocString = ss2.str();
+    this->sidewaysVelocityCurrent = "Sideways velocity: " + sideVelocString;
 
-    else if(opt == 3)
-    {
     float vertVelocConvert = this->vz;
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << vertVelocConvert;
-    string vertVelocString = ss.str();
-    string returnString = "Vertical velocity: " + vertVelocString;
-	this->verticalVelocityCurrent = returnString;
-	cout<< returnString<< endl;
-    }
+    stringstream ss3 (stringstream::in | stringstream::out);
+    ss3 << vertVelocConvert;
+    string vertVelocString = ss3.str();
+    this->verticalVelocityCurrent  = "Vertical velocity: " + vertVelocString;
 
-    else if(opt == 4)
-    {
     int sonarConvert = this->sonar;
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << sonarConvert;
-    string sonarString = ss.str();
-    string returnString = "Sonar reading: " + sonarString;
-	this->sonarCurrent = returnString;
-	cout<< returnString<< endl;
-    }
-    ofstream file ("example.txt");
+    stringstream ss4 (stringstream::in | stringstream::out);
+    ss4 << sonarConvert;
+    string sonarString = ss4.str();
+    this->sonarCurrent  = "Sonar reading: " + sonarString;
+
+
+    ofstream file ("currentNavdata.txt");
     if (file.is_open())
     {
     file << this->batteryCurrent <<"\n";
+    file << this->forwardVelocityCurrent <<"\n";
+    file << this->sidewaysVelocityCurrent <<"\n";
+    file << this->verticalVelocityCurrent <<"\n";
+    file << this->sonarCurrent <<"\n";
+ 
     }
 return true;
 }
