@@ -124,6 +124,8 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->vx = nav->vx;
     this->vy = nav->vy;
     this->vz = nav->vz;
+    this->tags_count = nav->tags_count;
+    this->tags_type = nav->tags_type;
 }
 
 //print navdata to client, used in gatac
@@ -161,6 +163,17 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     string sonarString = ss4.str();
     this->sonarCurrent  = "Sonar reading: " + sonarString;
 
+    int tagsCountConvert = this->tags_count;
+    stringstream ss5 (stringstream::in | stringstream::out);
+    ss5 << tagsCountConvert;
+    string tagsCountString = ss5.str();
+    this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;
+
+  /*  vector<unsigned int> tagsTypeConvert = this->tags_type;
+    stringstream ss6 (stringstream::in | stringstream::out);
+    ss6 << tagsTypeConvert;
+    string tagsTypeString = ss6.str();
+    this->tagsTypeCurrent= "Tags spotted, count: " + tagsTypeString; */
 
     ofstream file ("currentNavdata.txt");
     if (file.is_open())
@@ -170,6 +183,8 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     file << this->sidewaysVelocityCurrent <<"\n";
     file << this->verticalVelocityCurrent <<"\n";
     file << this->sonarCurrent <<"\n";
+    file << this->tagsCountCurrent <<"\n";
+  //  file << this->tagsTypeCurrent <<"\n";
  
     }
 return true;

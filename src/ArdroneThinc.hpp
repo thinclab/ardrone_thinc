@@ -76,7 +76,9 @@ class ArdroneThinc {
         double rotx, roty;
         int sonar;
         float batteryPercent, vx, vy, vz;
-	string batteryCurrent, sonarCurrent, forwardVelocityCurrent, sidewaysVelocityCurrent, verticalVelocityCurrent;
+	string batteryCurrent, sonarCurrent, forwardVelocityCurrent, sidewaysVelocityCurrent, verticalVelocityCurrent, tagsCountCurrent, tagsTypeCurrent;
+	unsigned int tags_count;        //tag detection
+	vector<unsigned int> tags_type;         //tag detection
         vector<cv::Vec3f> circles; 
 
         // subscriber callbacks
