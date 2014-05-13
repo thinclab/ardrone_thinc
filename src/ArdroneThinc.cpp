@@ -130,8 +130,7 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
 
 //print navdata to client, used in gatac
 bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
-	int opt = req.option;
-	cout<< "Navdata print request, option "<< opt << endl;
+	cout<< "Navdata print request"<< endl;
 
     float batteryConvert = this->batteryPercent;
     stringstream ss0 (stringstream::in | stringstream::out);
