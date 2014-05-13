@@ -101,10 +101,10 @@ int main(int argc, char **argv) {
 
 		// send waypoint response back
 		char sbuf[BUFLEN];
-		sbuf[0] = waypoint.response.x;
+	/*	sbuf[0] = waypoint.response.x;
 		sbuf[1] = waypoint.response.y;
 		sbuf[2] = waypoint.response.z;
-		sbuf[3] = 0;
+		sbuf[3] = 0;    */
 
 		if (sendto(s, sbuf, BUFLEN, 0, cli->ai_addr, cli->ai_addrlen) < 0) {
 			cout << "error sending to client" << endl;

@@ -216,9 +216,6 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
         }
     }
 
-    res.x = this->x;
-    res.y = this->y;
-    res.z = 0;  
     return true;
 }
 
