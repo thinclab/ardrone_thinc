@@ -40,7 +40,7 @@ using ardrone_thinc::Waypoint;
 using ardrone_thinc::PrintNavdata;
 
 // move enum
-enum dir { LEFT, RIGHT, UP, DOWN };
+enum dir { LEFT, RIGHT, UP, DOWN, HOV };
 
 class ArdroneThinc {
     public:

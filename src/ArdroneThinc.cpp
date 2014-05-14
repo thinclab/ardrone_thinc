@@ -174,18 +174,6 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     string tagsTypeString = ss6.str();
     this->tagsTypeCurrent= "Tags spotted, count: " + tagsTypeString; */
 
-    ofstream file ("currentNavdata.txt");
-    if (file.is_open())
-    {
-    file << this->batteryCurrent <<"\n";
-    file << this->forwardVelocityCurrent <<"\n";
-    file << this->sidewaysVelocityCurrent <<"\n";
-    file << this->verticalVelocityCurrent <<"\n";
-    file << this->sonarCurrent <<"\n";
-    file << this->tagsCountCurrent <<"\n";
-  //  file << this->tagsTypeCurrent <<"\n";
- 
-    }
 return true;
 }
 
@@ -205,20 +193,24 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
     // move: x first, then y
     while(ros::ok() && (dx || dy)) {
-        if(dx > 0) { 
+	if(!(dx == 0 && dy == 0)){
+            if(dx > 0) { 
             move(LEFT); dx--; 
-        } else if(dx < 0) { 
+            } else if(dx < 0) { 
             move(RIGHT); dx++;
-        } else if(dy < 0) { 
+            } else if(dy < 0) { 
             move(UP); dy++; 
-        } else if(dy > 0) {
+            } else if(dy > 0) {
             move(DOWN); dy--;
+            }
+	}
+	else if(dx == 0 && dy == 0){
+	move(HOV);
         }
     }
-
     return true;
+    
 }
-
 // move in the direction given
 void ArdroneThinc::move(enum dir d) {
 
@@ -244,6 +236,14 @@ void ArdroneThinc::move(enum dir d) {
             this->twist_msg.linear.x = -REAL_MOVE_VEL;
             this->y--;
             break; 
+	case HOV:
+	    this->twist_msg.linear.x = 0; 
+            this->twist_msg.linear.y = 0; 
+            this->twist_msg.linear.z = 0; 
+            this->twist_msg.angular.x = 0; 
+            this->twist_msg.angular.y = 0; 
+            this->twist_msg.angular.z = 0; 
+	    break;
         default: 
             break;  
     }
@@ -266,6 +266,14 @@ void ArdroneThinc::move(enum dir d) {
             this->twist_msg.linear.x = -MOVE_VEL;
             this->y--;
             break; 
+	case HOV:
+	    this->twist_msg.linear.x = 0; 
+            this->twist_msg.linear.y = 0; 
+            this->twist_msg.linear.z = 0; 
+            this->twist_msg.angular.x = 0; 
+            this->twist_msg.angular.y = 0; 
+            this->twist_msg.angular.z = 0; 
+	    break;
         default: 
             break;  
     }
