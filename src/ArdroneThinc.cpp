@@ -128,7 +128,7 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->tags_type = nav->tags_type;
 }
 
-//print navdata to client, used in gatac
+//print navdata to client-specific text file, used in gatac
 bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
 	cout<< "Navdata print request"<< endl;
 
@@ -167,12 +167,49 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     ss5 << tagsCountConvert;
     string tagsCountString = ss5.str();
     this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;
-
-  /*  vector<unsigned int> tagsTypeConvert = this->tags_type;
+   
+    /*  vector<unsigned int> tagsTypeConvert = this->tags_type;
     stringstream ss6 (stringstream::in | stringstream::out);
     ss6 << tagsTypeConvert;
     string tagsTypeString = ss6.str();
     this->tagsTypeCurrent= "Tags spotted, count: " + tagsTypeString; */
+
+    if(this->id == 0)
+    {
+    ofstream file ("currentNavdata0.txt");
+    if (file.is_open())
+    {
+    file << this->batteryCurrent <<"\n";
+    file << this->forwardVelocityCurrent <<"\n";
+    file << this->sidewaysVelocityCurrent <<"\n";
+    file << this->verticalVelocityCurrent <<"\n";
+    file << this->sonarCurrent <<"\n";
+    }
+    }
+    else if(this->id == 1)
+    {
+    ofstream file ("currentNavdata1.txt");
+    if (file.is_open())
+    {
+    file << this->batteryCurrent <<"\n";
+    file << this->forwardVelocityCurrent <<"\n";
+    file << this->sidewaysVelocityCurrent <<"\n";
+    file << this->verticalVelocityCurrent <<"\n";
+    file << this->sonarCurrent <<"\n";
+    }
+    }
+    else if(this->id == 2)
+    {
+    ofstream file ("currentNavdata2.txt");
+    if (file.is_open())
+    {
+    file << this->batteryCurrent <<"\n";
+    file << this->forwardVelocityCurrent <<"\n";
+    file << this->sidewaysVelocityCurrent <<"\n";
+    file << this->verticalVelocityCurrent <<"\n";
+    file << this->sonarCurrent <<"\n";
+    }
+    }
 
 return true;
 }
