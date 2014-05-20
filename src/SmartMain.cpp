@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 // ardrone_autonomy
 #include "ardrone_autonomy/CamSelect.h"
 #include "ardrone_autonomy/Navdata.h"
@@ -33,6 +34,27 @@ using geometry_msgs::Twist;
 using sensor_msgs::Image;
 using ardrone_autonomy::Navdata;
 using ardrone_autonomy::CamSelect;
+
+/**
+ * @file	SmartMain.cpp
+ * @author  	David Millard, Emily Wall, Casey Hetzler
+ * @version	1.0
+ *
+ * @section LICENSE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details at
+ * http://www.gnu.org/licenses/quick-guide-gplv3.html
+ *
+ * @section DESCRIPTION
+ * SmartMain creates an ArdroneThinc ROS node and allows communication with that node via the GaTACDroneControl API.
+ * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
+ */
 
 int main(int argc, char *argv[]) {
     // ros initialization
@@ -134,6 +156,11 @@ int main(int argc, char *argv[]) {
     
     spinner.start();
     ros::waitForShutdown();
-
+    if(at.id == 0)
+	remove("currentNavdata0.txt");
+    else if(at.id == 1)
+	remove("currentNavdata1.txt");
+    else if(at.id == 2)
+	remove("currentNavdata2.txt");
     return 0;
 }

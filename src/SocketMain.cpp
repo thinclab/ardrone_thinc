@@ -19,6 +19,26 @@ using ardrone_thinc::Waypoint;
 
 #define BUFLEN 64
 #define LOCALPORTBASE 5000
+/**
+ * @file	SocketMain.cpp
+ * @author  	David Millard, Emily Wall
+ * @version	1.0
+ *
+ * @section LICENSE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details at
+ * http://www.gnu.org/licenses/quick-guide-gplv3.html
+ *
+ * @section DESCRIPTION
+ * SocketMain creates a thinc_sock ROS node and allows communication with ArdroneThinc and SmartMain.
+ * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
+ */
 
 int main(int argc, char **argv) {
         // initialize a thinc_sock node with an anonymous name, so multiple instances can run at the same time (for multiple drones)

@@ -33,6 +33,27 @@ using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
 using ardrone_thinc::PrintNavdata;
 
+/**
+ * @file	ArdroneThinc.cpp
+ * @author  	David Millard, Emily Wall, Casey Hetzler
+ * @version	1.0
+ *
+ * @section LICENSE
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details at
+ * http://www.gnu.org/licenses/quick-guide-gplv3.html
+ *
+ * @section DESCRIPTION
+ * ArdroneThinc defines a ROS node, utilized by SmartMain and GaTACDroneControl for controlling drone clients and keeping track of data, such as navdata.
+ * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
+ */
+
 // MOVE_VEL is for use in the simulator
 #define MOVE_VEL 1
 
