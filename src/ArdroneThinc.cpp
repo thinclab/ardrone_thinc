@@ -35,7 +35,7 @@ using ardrone_thinc::PrintNavdata;
 
 /**
  * @file	ArdroneThinc.cpp
- * @author  	David Millard, Emily Wall, Casey Hetzler
+ * @author  	David Millard, Emily Wall, Vince Capparell, Casey Hetzler
  * @version	1.0
  *
  * @section LICENSE
@@ -60,7 +60,10 @@ using ardrone_thinc::PrintNavdata;
 // REAL_MOVE_VEL is for real world drones
 #define REAL_MOVE_VEL 0.1
 
-// threshold images and adjust drone position accordingly
+/**
+ * Camera Callback function. Now deprecated. Formerly meant to help drone center self on grid cell.
+ * @param rosimg The sensor message (image) returned by the currently toggled camera
+ */
 void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
 /*	cout << "Entered cam callback method" << endl;
     // convert ros image to opencv image
@@ -136,7 +139,10 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     twist_pub.publish(twist_msg);    */
 }
 
-// collect navdata
+/**
+ * Navdata Callback function. Sets drone's data members to values in navdata message
+ * @param nav The navdata message returned, with all navdata members available
+ */
 void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->rotx = nav->rotX;
     this->roty = nav->rotY;
@@ -149,7 +155,12 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->tags_type = nav->tags_type;
 }
 
-//print navdata to client-specific text file, used in gatac
+/**
+ * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
+ * @param &req PrintNavdata request, an empty message
+ * @param &res PrintNavdata response, an empty message
+ * @return Boolean denoting whether the call was successful
+ */
 bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
 	cout<< "Navdata print request"<< endl;
 
@@ -235,7 +246,12 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
 return true;
 }
 
-// move to designated sector
+/**
+ * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
+ * @param &req Waypoint request sent, with drone ID and desired location
+ * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
+ * @return Boolean denoting whether the call was successful
+ */
 bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
     cout << "waypoint request: ";
     cout << req.x << ", " << req.y << endl;
@@ -269,7 +285,11 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
     return true;
     
 }
-// move in the direction given
+
+/**
+ * Move function, updates drone's position and publishes Twist messages to cmd_vel topic
+ * @param dir d The direction the drone will move
+ */
 void ArdroneThinc::move(enum dir d) {
 
     // -linear.x: move backward
