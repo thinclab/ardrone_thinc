@@ -216,6 +216,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     file << this->sidewaysVelocityCurrent <<"\n";
     file << this->verticalVelocityCurrent <<"\n";
     file << this->sonarCurrent <<"\n";
+    file << this->tagsCountCurrent <<"\n";
     }
     }
     else if(this->id == 1)
@@ -228,6 +229,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     file << this->sidewaysVelocityCurrent <<"\n";
     file << this->verticalVelocityCurrent <<"\n";
     file << this->sonarCurrent <<"\n";
+    file << this->tagsCountCurrent <<"\n";
     }
     }
     else if(this->id == 2)
@@ -240,6 +242,7 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     file << this->sidewaysVelocityCurrent <<"\n";
     file << this->verticalVelocityCurrent <<"\n";
     file << this->sonarCurrent <<"\n";
+    file << this->tagsCountCurrent <<"\n";
     }
     }
 
@@ -288,7 +291,7 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
 /**
  * Move function, updates drone's position and publishes Twist messages to cmd_vel topic
- * @param dir d The direction the drone will move
+ * @param d The direction the drone will move
  */
 void ArdroneThinc::move(enum dir d) {
 
