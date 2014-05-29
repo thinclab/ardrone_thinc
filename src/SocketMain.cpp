@@ -21,7 +21,7 @@ using ardrone_thinc::Waypoint;
 #define LOCALPORTBASE 5000
 /**
  * @file	SocketMain.cpp
- * @author  	David Millard, Emily Wall
+ * @author  	David Millard, Emily Wall, Vince Capparell
  * @version	1.0
  *
  * @section LICENSE
@@ -40,6 +40,11 @@ using ardrone_thinc::Waypoint;
  * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
  */
 
+
+/**
+ * Main method, sets up socket to communicate with thinc_smart node.
+ * @return Returns 0 to end the process
+ */
 int main(int argc, char **argv) {
         // initialize a thinc_sock node with an anonymous name, so multiple instances can run at the same time (for multiple drones)
 	ros::init(argc, argv, "thinc_sock", ros::init_options::AnonymousName);
@@ -121,10 +126,6 @@ int main(int argc, char **argv) {
 
 		// send waypoint response back
 		char sbuf[BUFLEN];
-	/*	sbuf[0] = waypoint.response.x;
-		sbuf[1] = waypoint.response.y;
-		sbuf[2] = waypoint.response.z;
-		sbuf[3] = 0;    */
 
 		if (sendto(s, sbuf, BUFLEN, 0, cli->ai_addr, cli->ai_addrlen) < 0) {
 			cout << "error sending to client" << endl;
