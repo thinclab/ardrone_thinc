@@ -37,7 +37,7 @@ using ardrone_autonomy::CamSelect;
 
 /**
  * @file	SmartMain.cpp
- * @author  	David Millard, Emily Wall, Casey Hetzler
+ * @author  	David Millard, Emily Wall, Vince Capparell, Casey Hetzler
  * @version	1.0
  *
  * @section LICENSE
@@ -56,6 +56,12 @@ using ardrone_autonomy::CamSelect;
  * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
  */
 
+/**
+ * Main method. This begins a node, initializes all subscribers/publishers/members, and compels the drone to take off and wait for futrther command
+ * @param argc Count of command line arguments
+ * @param *argv[] Array of command line arguments 
+ * @return Returns 0 when ROS stops spinning and exits the main function
+ */
 int main(int argc, char *argv[]) {
     // ros initialization
     ros::init(argc, argv, "thinc_main");
@@ -137,21 +143,22 @@ int main(int argc, char *argv[]) {
         // call flat trim - calibrate to flat surface
         ssrv::Empty trim_req;
         at.trim_cli.call(trim_req);
-
-        // takeoff and hover
-        at.twist_msg.linear.x = 0;
-        at.twist_msg.linear.y = 0;
-        at.twist_msg.linear.z = 0;
-	at.twist_msg.angular.x = 0;
-	at.twist_msg.angular.y = 0;
-	at.twist_msg.angular.z = 0;
-        at.launch_pub.publish(at.empty_msg);
-        
-        ardrone_thinc::Waypoint waypoint_msg;
-        waypoint_msg.request.x = 0; 
-        waypoint_msg.request.y = 0; 
-        waypoint_msg.request.z = 0; 
-        waypoint_msg.request.id = 0; 
+ 	if(at.simDrones == true){
+		// takeoff and hover
+		at.twist_msg.linear.x = 0;
+		at.twist_msg.linear.y = 0;
+		at.twist_msg.linear.z = 0;
+		at.twist_msg.angular.x = 0;
+		at.twist_msg.angular.y = 0;
+		at.twist_msg.angular.z = 0;
+		at.launch_pub.publish(at.empty_msg);
+		
+		ardrone_thinc::Waypoint waypoint_msg;
+		waypoint_msg.request.x = 0; 
+		waypoint_msg.request.y = 0; 
+		waypoint_msg.request.z = 0; 
+		waypoint_msg.request.id = 0; 
+	}
     } 
     
     spinner.start();
