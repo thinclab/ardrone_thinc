@@ -26,7 +26,7 @@
 #include <netdb.h>
 #include <pthread.h>
 
-using namespace std; 
+using namespace std;
 
 namespace smsg = std_msgs;
 using ros::Publisher;
@@ -67,12 +67,14 @@ enum dir { LEFT, RIGHT, UP, DOWN, HOV };
 
 class ArdroneThinc {
     public:
-	
+
+        ArdroneThinc(int startx, int starty, double elev);
+
         /**
 	 * @brief Publisher for launch topic, uses takeoff service
 	 */
         Publisher launch_pub;
-	
+
 	/**
 	 * @brief Publisher for land topic, uses land service
 	 */
@@ -116,7 +118,7 @@ class ArdroneThinc {
 	/**
 	 * @brief Service client for waypoint service
 	 */
-        ServiceClient waypoint_cli; 
+        ServiceClient waypoint_cli;
 
 	/**
 	 * @brief Service server for waypoint service
@@ -126,7 +128,7 @@ class ArdroneThinc {
 	/**
 	 * @brief Service client for printnavdata service
 	 */
-        ServiceClient printnavdata_cli; 
+        ServiceClient printnavdata_cli;
 
 	/**
 	 * @brief Service server for printnavdata service
@@ -152,36 +154,26 @@ class ArdroneThinc {
 	/**
 	 * @brief Rows in drone's grid
 	 */
-	int rows; 
+	int rows;
         int x_scale;
-	int y_scale; 
+	int y_scale;
 
 	//Real or simulated drones
 	/**
 	 * @brief Boolean that tells whether this drone's node is a real or simulated drone
-	 */	
+	 */
 	bool simDrones;
 
         // grid position, interoperability id
 
 	/**
-	 * @brief Drone's current x position
-	 */
-        int x;
-
-	/**
-	 * @brief Drone's current y position
-	 */
-	int y;
-
-	/**
 	 * @brief Drone's unique ID
 	 */
 	int id;
-        
+
         // callback persistent storage
         double rotx, roty;
-	
+
 	/**
 	 * @brief Drone's current sonar reading
 	 */
@@ -190,7 +182,7 @@ class ArdroneThinc {
 	/**
 	 * @brief Drone's current battery reading
 	 */
-        float batteryPercent; 
+        float batteryPercent;
 
 	/**
 	 * @brief Drone's current sideways velocity reading
@@ -231,7 +223,7 @@ class ArdroneThinc {
 	 * @brief Drone's current vertical velocity, represented as human-readable string
 	 */
 	string verticalVelocityCurrent;
-	
+
 	/**
 	 * @brief Drone's current tag count, represented as human-readable string
 	 */
@@ -245,17 +237,17 @@ class ArdroneThinc {
 	/**
 	 * @brief Drone's current tag count reading
 	 */
-	unsigned int tags_count;        
+	unsigned int tags_count;
 
 	/**
 	 * @brief Drone's current tag type reading, vector
 	 */
-	vector<unsigned int> tags_type;         
+	vector<unsigned int> tags_type;
 
 	/**
 	 * @brief Circles, used in deprecated CamCallback
 	 */
-        vector<cv::Vec3f> circles; 
+        vector<cv::Vec3f> circles;
 
 	/**
 	 * @brief Image vector, used in deprecated CamCallback
@@ -275,7 +267,7 @@ class ArdroneThinc {
 	 * @param nav The navdata message returned, with all navdata members available
 	 */
         void NavdataCallback(const NavdataConstPtr& nav);
-        
+
         // service callbacks
 
 	/**
@@ -296,11 +288,30 @@ class ArdroneThinc {
 
         // helper functions
 
-	/**
-	 * Move function, updates drone's position and publishes Twist messages to cmd_vel topic
-	 * @param d The direction the drone will move
-	 */
-        void move(enum dir d); 
+
+        void land();
+
+    private:
+        // these are the variables used to estimate the drone's position
+        double estX, estY, estZ; // in meters
+        double aX, aY; // in meters a second second
+        double lastTimestamp; // in microseconds !
+
+        double goalX, goalY, goalZ; // in meters
+        bool hovering;
+        bool flying;
+        double ardroneMass; // in kilograms
+        double tolerance;
+        double k; // in newtons per meter
+
+
+        void estimateState(double deltat);
+        void springBasedCmdVel(double deltat);
+
+        void getStateFor(double x, double y, int & X, int & Y);
+        void getCenterOf(int X, int Y, double & x, double & y);
+        double distanceToGoal();
+
 };
 
 #endif

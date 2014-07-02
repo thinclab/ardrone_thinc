@@ -70,8 +70,6 @@ int main(int argc, char *argv[]) {
     ros::AsyncSpinner spinner(2);
 
     // data container
-    ArdroneThinc at;
-    at.simDrones = false;
 
     // handle usage
     if (argc != 7) {
@@ -81,32 +79,20 @@ int main(int argc, char *argv[]) {
         cout << endl;
         exit(1);
     }
+    ArdroneThinc at(atoi(argv[4]), atoi(argv[5]), 2);
+    at.simDrones = false;
+    // grid size
+    at.columns = atoi(argv[1]);
+    at.rows = atoi(argv[2]);
+
+    // initial position and id
+    at.id = atoi(argv[3]);
+
     if (argc == 7 && (strcmp(argv[6],"s") == 0))
     {
      //we are simulating
      at.simDrones = true;
 
-    // grid size
-    at.columns = atoi(argv[1]);
-    at.rows = atoi(argv[2]);
-
-    // initial position and id
-    at.id = atoi(argv[3]);
-    at.x = atoi(argv[4]);
-    at.y = atoi(argv[5]);
-    }
-    else {
-     //we are not simulating, these are real drones
-     at.simDrones = false;
-
-    // grid size
-    at.columns = atoi(argv[1]);
-    at.rows = atoi(argv[2]);
-
-    // initial position and id
-    at.id = atoi(argv[3]);
-    at.x = atoi(argv[4]);
-    at.y = atoi(argv[5]);
     }
 
 	// publishers

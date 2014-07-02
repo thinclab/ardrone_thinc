@@ -106,11 +106,11 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
 
     // convert opencv image to ros image and publish
     //this->thresh_pub.publish(orig->toImageMsg());
-    
+
 
     double xp = move.x;
     double yp = move.y;
-    
+
     // center drone
     if(xp > this->y) {
 	cout<< "if 1" << endl;
@@ -139,6 +139,29 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     twist_pub.publish(twist_msg);    */
 }
 
+ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
+
+    k = 5;
+    tolerance = 0.3;
+    ardroneMass = 1.477;
+    hovering = false;
+    flying = false;
+
+    // hard code these for now
+    x_scale = 20;
+    y_scale = 20;
+
+    getCenterOf(startx, starty, this->estX, this->estY);
+
+    goalX = this->estX;
+    goalY = this->estY;
+    goalZ = elev;
+
+
+    cout << goalX << " " << estX << " " << vx << endl;
+
+}
+
 /**
  * Navdata Callback function. Sets drone's data members to values in navdata message
  * @param nav The navdata message returned, with all navdata members available
@@ -151,8 +174,17 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->vx = nav->vx;
     this->vy = nav->vy;
     this->vz = nav->vz;
+    this->aX = nav->ax;
+    this->aY = nav->ay;
     this->tags_count = nav->tags_count;
     this->tags_type = nav->tags_type;
+    this->flying = (nav->state >= 3 && nav->state <= 5) || nav->state == 7;
+
+    estimateState(nav->tm - this->lastTimestamp);
+    springBasedCmdVel(nav->tm - this->lastTimestamp);
+
+    this->lastTimestamp = nav->tm;
+
 }
 
 /**
@@ -168,38 +200,38 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     stringstream ss0 (stringstream::in | stringstream::out);
     ss0 << batteryConvert;
     string batteryString = ss0.str();
-    this->batteryCurrent = "Battery percent: " + batteryString;  
+    this->batteryCurrent = "Battery percent: " + batteryString;
 
     float forVelocConvert = this->vy;
    stringstream ss1 (stringstream::in | stringstream::out);
     ss1 << forVelocConvert;
     string forVelocString = ss1.str();
-    this->forwardVelocityCurrent = "Forward velocity: " + forVelocString; 
+    this->forwardVelocityCurrent = "Forward velocity: " + forVelocString;
 
     float sideVelocConvert = this->vx;
     stringstream ss2 (stringstream::in | stringstream::out);
     ss2 << sideVelocConvert;
     string sideVelocString = ss2.str();
-    this->sidewaysVelocityCurrent = "Sideways velocity: " + sideVelocString; 
+    this->sidewaysVelocityCurrent = "Sideways velocity: " + sideVelocString;
 
     float vertVelocConvert = this->vz;
     stringstream ss3 (stringstream::in | stringstream::out);
     ss3 << vertVelocConvert;
     string vertVelocString = ss3.str();
-    this->verticalVelocityCurrent  = "Vertical velocity: " + vertVelocString; 
+    this->verticalVelocityCurrent  = "Vertical velocity: " + vertVelocString;
 
     int sonarConvert = this->sonar;
   stringstream ss4 (stringstream::in | stringstream::out);
     ss4 << sonarConvert;
     string sonarString = ss4.str();
-    this->sonarCurrent  = "Sonar reading: " + sonarString; 
+    this->sonarCurrent  = "Sonar reading: " + sonarString;
 
     int tagsCountConvert = this->tags_count;
   stringstream ss5 (stringstream::in | stringstream::out);
     ss5 << tagsCountConvert;
     string tagsCountString = ss5.str();
-    this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;  
-   
+    this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;
+
     if(this->id == 0)
     {
     ofstream file ("currentNavdata0.txt");
@@ -255,122 +287,117 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
     // ensure valid grid cell
     if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows) {
-        return false; 
+        return false;
     }
 
-    // calculate how many cells to move
-    int dx = this->x - req.x;
-    int dy = this->y - req.y;
+    // calculate the center of the square
+    // set the goal
+    // loop until we are within tolerance of it or are no longer flying
 
-    // move: x first, then y
-    while(ros::ok() && (dx || dy)) {
-	if(!(dx == 0 && dy == 0)){
-            if(dx > 0) { 
-            move(LEFT); dx--; 
-            } else if(dx < 0) { 
-            move(RIGHT); dx++;
-            } else if(dy < 0) { 
-            move(UP); dy++; 
-            } else if(dy > 0) {
-            move(DOWN); dy--;
-            }
-	}
-	else if(dx == 0 && dy == 0){
-	move(HOV);
+    cout << goalX << " " << estX << " " << vx << endl;
+
+    getCenterOf(req.x, req.y, this->goalX, this->goalY);
+
+
+    while (flying && distanceToGoal() > tolerance) {
+        ros::Duration(0.5).sleep();
+
+    cout << goalX << " " << estX << " " << vx << " : " << goalY << " " << estY << " " << vy << " = " << distanceToGoal() << endl;
+
+        if(!ros::ok()) {
+            return false;
         }
     }
+
     return true;
-    
+
+
 }
 
-/**
- * Move function, updates drone's position and publishes Twist messages to cmd_vel topic
- * @param d The direction the drone will move
- */
-void ArdroneThinc::move(enum dir d) {
+void ArdroneThinc::getStateFor(double x, double y, int & X, int & Y) {
+    X = (int)(y / y_scale);
+    Y = (int)(-x / x_scale);
+}
 
-    // -linear.x: move backward
-    // +linear.x: move forward
-    // -linear.y: move right
-    // +linear.y: move left
-    if(simDrones == false){
-    switch(d) {
-        case LEFT: 
-            this->twist_msg.linear.y = REAL_MOVE_VEL; 
-            this->x--;
-            break; 
-        case RIGHT: 
-            this->twist_msg.linear.y = -REAL_MOVE_VEL;
-            this->x++;
-            break; 
-        case UP: 
-            this->twist_msg.linear.x = REAL_MOVE_VEL; 
-            this->y++;
-            break; 
-        case DOWN: 
-            this->twist_msg.linear.x = -REAL_MOVE_VEL;
-            this->y--;
-            break; 
-	case HOV:
-	    this->twist_msg.linear.x = 0; 
-            this->twist_msg.linear.y = 0; 
-            this->twist_msg.linear.z = 0; 
-            this->twist_msg.angular.x = 0; 
-            this->twist_msg.angular.y = 0; 
-            this->twist_msg.angular.z = 0; 
-	    break;
-        default: 
-            break;  
-    }
-    }
-    else if(simDrones == true){
-    switch(d) {
-        case LEFT: 
-            this->twist_msg.linear.y = MOVE_VEL; 
-            this->x--;
-            break; 
-        case RIGHT: 
-            this->twist_msg.linear.y = -MOVE_VEL;
-            this->x++;
-            break; 
-        case UP: 
-            this->twist_msg.linear.x = MOVE_VEL; 
-            this->y++;
-            break; 
-        case DOWN: 
-            this->twist_msg.linear.x = -MOVE_VEL;
-            this->y--;
-            break; 
-	case HOV:
-	    this->twist_msg.linear.x = 0; 
-            this->twist_msg.linear.y = 0; 
-            this->twist_msg.linear.z = 0; 
-            this->twist_msg.angular.x = 0; 
-            this->twist_msg.angular.y = 0; 
-            this->twist_msg.angular.z = 0; 
-	    break;
-        default: 
-            break;  
-    }
-    }
-    // publish message to move
-    this->twist_pub.publish(this->twist_msg); 
-  
-    // stop-gap time-based motion, for simulator
-    if(simDrones == true)
-    ros::Duration(2.1).sleep();
+void ArdroneThinc::getCenterOf(int X, int Y, double & x, double & y) {
+    x = ((double)Y + .5) * x_scale;
+    y = -((double)X + .5) * y_scale;
+}
 
-    // stop-gap time-based motion, for real drones
-    if(simDrones == false)
-    ros::Duration(1.5).sleep();
 
-    // stop moving and hover
-    this->twist_msg.linear.x = 0; 
-    this->twist_msg.linear.y = 0; 
-    this->twist_msg.linear.z = 0; 
-    this->twist_msg.angular.x = 0; 
-    this->twist_msg.angular.y = 0; 
-    this->twist_msg.angular.z = 0; 
-    this->twist_pub.publish(this->twist_msg);
-    ros::Duration(2).sleep(); 
+double ArdroneThinc::distanceToGoal() {
+   double distX = goalX - estX;
+   double distY = goalY - estY;
+   double distZ = goalZ - estZ;
+
+   return  sqrt(distX*distX + distY*distY + distZ*distZ );
+
+}
+
+void ArdroneThinc::estimateState(double deltat) {
+    deltat /= 100000;
+    this->estX += this->vx / 1000 * deltat + this->aX / 1000 * deltat * deltat;
+    this->estY += this->vy / 1000 * deltat + this->aY / 1000 * deltat * deltat;
+    this->estZ = this->sonar / 1000;
+
+}
+
+
+void ArdroneThinc::springBasedCmdVel(double deltat) {
+
+    if (flying == true) {
+        deltat /= 100000;
+        double distX = goalX - estX;
+        double distY = goalY - estY;
+        double distZ = goalZ - estZ;
+
+        // check if we're within tolerance, if so then hover
+
+        if (distX*distX + distY*distY + distZ*distZ < this->tolerance*this->tolerance) {
+            if (! this->hovering) {
+                this->twist_msg.linear.x = 0;
+                this->twist_msg.linear.y = 0;
+                this->twist_msg.linear.z = 0;
+                this->twist_msg.angular.x = 0;
+                this->twist_msg.angular.y = 0;
+                this->twist_msg.angular.z = 0;
+                this->twist_pub.publish(this->twist_msg);
+                this->hovering = true;
+            }
+            return;
+        }
+        this->hovering = false;
+
+        // this is wrong, c should be 2 * sqrt(k * m)
+        double c = 15 * sqrt( k * ardroneMass );
+
+        double springForceX = k * distX;
+        double dampingForceX = -c * this->vx / 1000;
+        double springForceY = k * distY;
+        double dampingForceY = -c * this->vy / 1000;
+        double springForceZ = k * distZ;
+        double dampingForceZ = -c * this->vz / 1000;
+
+        double totalForceX = springForceX + dampingForceX;
+        double totalForceY = springForceY + dampingForceY;
+        double totalForceZ = springForceZ + dampingForceZ;
+
+        double accelX = totalForceX / ardroneMass;
+        double accelY = totalForceY / ardroneMass;
+        double accelZ = totalForceZ / ardroneMass;
+
+
+        double deltaVx = accelX * deltat;
+        double deltaVy = accelY * deltat;
+        double deltaVz = accelZ * deltat;
+
+        this->twist_msg.linear.x = this->vx / 1000 + deltaVx;
+        this->twist_msg.linear.y = this->vy / 1000 + deltaVy;
+        this->twist_msg.linear.z = this->vz / 1000 + deltaVz;
+        this->twist_msg.angular.x = 0;
+        this->twist_msg.angular.y = 0;
+        this->twist_msg.angular.z = 0;
+        this->twist_pub.publish(this->twist_msg);
+    }
+
 }
