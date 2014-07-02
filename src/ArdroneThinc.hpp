@@ -39,7 +39,9 @@ using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
 using ardrone_thinc::PrintNavdata;
 
-// move enum
+/**
+ * Enumerated movement directions
+ */
 enum dir { LEFT, RIGHT, UP, DOWN, HOV };
 
 /**
@@ -296,7 +298,7 @@ class ArdroneThinc {
 
 	/**
 	 * Move function, updates drone's position and publishes Twist messages to cmd_vel topic
-	 * @param dir d The direction the drone will move
+	 * @param d The direction the drone will move
 	 */
         void move(enum dir d); 
 };

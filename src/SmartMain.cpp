@@ -59,7 +59,7 @@ using ardrone_autonomy::CamSelect;
 /**
  * Main method. This begins a node, initializes all subscribers/publishers/members, and compels the drone to take off and wait for futrther command
  * @param argc Count of command line arguments
- * @param *argv[] Array of command line arguments 
+ * @param *argv[] Array of command line arguments
  * @return Returns 0 when ROS stops spinning and exits the main function
  */
 int main(int argc, char *argv[]) {
@@ -70,20 +70,20 @@ int main(int argc, char *argv[]) {
     ros::AsyncSpinner spinner(2);
 
     // data container
-    ArdroneThinc at; 
+    ArdroneThinc at;
     at.simDrones = false;
-   
+
     // handle usage
     if (argc != 7) {
         cout << "usage: ";
         cout << argv[0];
         cout << " <cols> <rows> <drone-id> <drone-col> <drone-row> <if flying simulated drones, last argument is 's', else last argument is 'r'";
         cout << endl;
-        exit(1); 
+        exit(1);
     }
     if (argc == 7 && (strcmp(argv[6],"s") == 0))
     {
-     //we are simulating	
+     //we are simulating
      at.simDrones = true;
 
     // grid size
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     }
     else {
      //we are not simulating, these are real drones
-     at.simDrones = false;		
+     at.simDrones = false;
 
     // grid size
     at.columns = atoi(argv[1]);
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     at.x = atoi(argv[4]);
     at.y = atoi(argv[5]);
     }
-    
+
 	// publishers
     at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
     at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
     // subscribers
     at.cam_sub = n.subscribe<Image>("ardrone/image_raw", 1, &ArdroneThinc::CamCallback, &at);
     at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, &at);
-    
+
     // services
     at.waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, &at);
     at.printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThinc::PrintNavdataCallback, &at);
@@ -127,8 +127,8 @@ int main(int argc, char *argv[]) {
     // service clients
     at.camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
     at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
-    at.waypoint_cli = n.serviceClient<Waypoint>("waypoint"); 
-    at.printnavdata_cli = n.serviceClient<PrintNavdata>("printnavdata"); 
+    at.waypoint_cli = n.serviceClient<Waypoint>("waypoint");
+    at.printnavdata_cli = n.serviceClient<PrintNavdata>("printnavdata");
 
     // let roscore catch up
     ros::Duration(1.0).sleep();
@@ -143,24 +143,24 @@ int main(int argc, char *argv[]) {
         // call flat trim - calibrate to flat surface
         ssrv::Empty trim_req;
         at.trim_cli.call(trim_req);
- 	if(at.simDrones == true){
-		// takeoff and hover
-		at.twist_msg.linear.x = 0;
-		at.twist_msg.linear.y = 0;
-		at.twist_msg.linear.z = 0;
-		at.twist_msg.angular.x = 0;
-		at.twist_msg.angular.y = 0;
-		at.twist_msg.angular.z = 0;
-		at.launch_pub.publish(at.empty_msg);
-		
-		ardrone_thinc::Waypoint waypoint_msg;
-		waypoint_msg.request.x = 0; 
-		waypoint_msg.request.y = 0; 
-		waypoint_msg.request.z = 0; 
-		waypoint_msg.request.id = 0; 
-	}
-    } 
-    
+        if(at.simDrones == true){
+            // takeoff and hover
+            at.twist_msg.linear.x = 0;
+            at.twist_msg.linear.y = 0;
+            at.twist_msg.linear.z = 0;
+            at.twist_msg.angular.x = 0;
+            at.twist_msg.angular.y = 0;
+            at.twist_msg.angular.z = 0;
+            at.launch_pub.publish(at.empty_msg);
+
+            ardrone_thinc::Waypoint waypoint_msg;
+            waypoint_msg.request.x = 0;
+            waypoint_msg.request.y = 0;
+            waypoint_msg.request.z = 0;
+            waypoint_msg.request.id = 0;
+        }
+    }
+
     spinner.start();
     ros::waitForShutdown();
     if(at.id == 0)

@@ -168,44 +168,38 @@ bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata
     stringstream ss0 (stringstream::in | stringstream::out);
     ss0 << batteryConvert;
     string batteryString = ss0.str();
-    this->batteryCurrent= "Battery percent: " + batteryString;
+    this->batteryCurrent = "Battery percent: " + batteryString;  
 
     float forVelocConvert = this->vy;
-    stringstream ss1 (stringstream::in | stringstream::out);
+   stringstream ss1 (stringstream::in | stringstream::out);
     ss1 << forVelocConvert;
     string forVelocString = ss1.str();
-    this->forwardVelocityCurrent  = "Forward velocity: " + forVelocString;
+    this->forwardVelocityCurrent = "Forward velocity: " + forVelocString; 
 
     float sideVelocConvert = this->vx;
     stringstream ss2 (stringstream::in | stringstream::out);
     ss2 << sideVelocConvert;
     string sideVelocString = ss2.str();
-    this->sidewaysVelocityCurrent = "Sideways velocity: " + sideVelocString;
+    this->sidewaysVelocityCurrent = "Sideways velocity: " + sideVelocString; 
 
     float vertVelocConvert = this->vz;
     stringstream ss3 (stringstream::in | stringstream::out);
     ss3 << vertVelocConvert;
     string vertVelocString = ss3.str();
-    this->verticalVelocityCurrent  = "Vertical velocity: " + vertVelocString;
+    this->verticalVelocityCurrent  = "Vertical velocity: " + vertVelocString; 
 
     int sonarConvert = this->sonar;
-    stringstream ss4 (stringstream::in | stringstream::out);
+  stringstream ss4 (stringstream::in | stringstream::out);
     ss4 << sonarConvert;
     string sonarString = ss4.str();
-    this->sonarCurrent  = "Sonar reading: " + sonarString;
+    this->sonarCurrent  = "Sonar reading: " + sonarString; 
 
     int tagsCountConvert = this->tags_count;
-    stringstream ss5 (stringstream::in | stringstream::out);
+  stringstream ss5 (stringstream::in | stringstream::out);
     ss5 << tagsCountConvert;
     string tagsCountString = ss5.str();
-    this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;
+    this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;  
    
-    /*  vector<unsigned int> tagsTypeConvert = this->tags_type;
-    stringstream ss6 (stringstream::in | stringstream::out);
-    ss6 << tagsTypeConvert;
-    string tagsTypeString = ss6.str();
-    this->tagsTypeCurrent= "Tags spotted, count: " + tagsTypeString; */
-
     if(this->id == 0)
     {
     ofstream file ("currentNavdata0.txt");

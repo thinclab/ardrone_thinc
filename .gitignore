@@ -6,3 +6,7 @@ lib/
 msg_gen/
 srv_gen/
 src/ardrone_thinc/
+*~
+src/html/
+src/latex/
+src/ardrone_thinc/

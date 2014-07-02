@@ -1,0 +1,4 @@
+PROJECT_NAME     = ArdroneThinc
+INPUT            = ArdroneThinc.cpp ArdroneThinc.hpp SmartMain.cpp
+EXTRACT_ALL      = YES
+EXTRACT_PRIVATE  = YES
