@@ -148,7 +148,7 @@ ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
     flying = false;
 
     // hard code these for now
-    x_scale = 20;
+    x_scale = -20;
     y_scale = 20;
 
     getCenterOf(startx, starty, this->estX, this->estY);
@@ -156,9 +156,6 @@ ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
     goalX = this->estX;
     goalY = this->estY;
     goalZ = elev;
-
-
-    cout << goalX << " " << estX << " " << vx << endl;
 
 }
 
@@ -294,15 +291,11 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
     // set the goal
     // loop until we are within tolerance of it or are no longer flying
 
-    cout << goalX << " " << estX << " " << vx << endl;
-
     getCenterOf(req.x, req.y, this->goalX, this->goalY);
 
 
     while (flying && distanceToGoal() > tolerance) {
         ros::Duration(0.5).sleep();
-
-    cout << goalX << " " << estX << " " << vx << " : " << goalY << " " << estY << " " << vy << " = " << distanceToGoal() << endl;
 
         if(!ros::ok()) {
             return false;
@@ -316,12 +309,12 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
 void ArdroneThinc::getStateFor(double x, double y, int & X, int & Y) {
     X = (int)(y / y_scale);
-    Y = (int)(-x / x_scale);
+    Y = (int)(x / x_scale);
 }
 
 void ArdroneThinc::getCenterOf(int X, int Y, double & x, double & y) {
-    x = ((double)Y + .5) * x_scale;
-    y = -((double)X + .5) * y_scale;
+    x = ((double)Y + .5) * y_scale;
+    y = ((double)X + .5) * x_scale;
 }
 
 
