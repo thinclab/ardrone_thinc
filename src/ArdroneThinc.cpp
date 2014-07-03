@@ -141,9 +141,9 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
 
 ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
 
-    k = 5;
+    k = 15;
     tolerance = 0.3;
-    ardroneMass = 1.477;
+    ardroneMass = 0.5;
     hovering = false;
     flying = false;
 
@@ -173,7 +173,8 @@ void ArdroneThinc::stop() {
 void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->rotx = nav->rotX;
     this->roty = nav->rotY;
-    this->vtheta = (nav->rotZ - this->rotz) / (nav->tm - this->lastTimestamp);
+//    this->vtheta = (nav->rotZ - this->rotz) / ((nav->tm - this->lastTimestamp) / 1000000.0);
+    this->vtheta = (nav->rotZ - this->rotz) / ((nav->tm - this->lastTimestamp));
     if (isnan(this->vtheta))
         this->vtheta = 0;
     this->rotz = nav->rotZ;
@@ -342,7 +343,7 @@ double ArdroneThinc::distanceToGoal() {
 }
 
 void ArdroneThinc::estimateState(double deltat) {
-    deltat /= 100000;
+    deltat /= 1000000;
     this->estX += this->vx / 1000 * deltat + this->aX * 9.8 * deltat * deltat;
     this->estY += this->vy / 1000 * deltat + this->aY * 9.8 * deltat * deltat;
     this->estZ = this->sonar / 1000;
@@ -353,14 +354,13 @@ void ArdroneThinc::estimateState(double deltat) {
 void ArdroneThinc::springBasedCmdVel(double deltat) {
 
     if (flying == true) {
-        deltat /= 100000;
+        deltat /= 100000; // This is wrong, but for some reason makes the simulation right GO ROS!!!
         double distX = goalX - estX;
         double distY = goalY - estY;
         double distZ = goalZ - estZ;
 
         // check if we're within tolerance, if so then hover
-        // this is wrong, c should be 2 * sqrt(k * m)
-        double c = 15 * sqrt( k * ardroneMass );
+        double c = 2 * sqrt( k * ardroneMass );
 
         if (distX*distX + distY*distY + distZ*distZ + rotz*rotz < this->tolerance*this->tolerance) {
             if (! this->hovering) {
@@ -379,9 +379,9 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
 
 
         double springForceX = k * distX;
-        double dampingForceX = -c * this->vx / 1000;
+        double dampingForceX = -c * this->vx / 10000;
         double springForceY = k * distY;
-        double dampingForceY = -c * this->vy / 1000;
+        double dampingForceY = -c * this->vy / 10000;
         double springForceZ = k * distZ;
         double dampingForceZ = -c * this->vz / 1000;
 
@@ -407,8 +407,8 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
         double deltaTheta = accelTheta * deltat;
 
 
-        this->twist_msg.linear.x = this->vx / 1000 + deltaVx;
-        this->twist_msg.linear.y = this->vy / 1000 + deltaVy;
+        this->twist_msg.linear.x = this->vx / 10000 + deltaVx;
+        this->twist_msg.linear.y = this->vy / 10000 + deltaVy;
         this->twist_msg.linear.z = this->vz / 1000 + deltaVz;
         this->twist_msg.angular.x = 0;
         this->twist_msg.angular.y = 0;
@@ -419,7 +419,7 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
         static int count = 0;
         count ++;
         if (count % 50 == 0)
-            cout << estX <<":"<<estY<<":"<<estZ<<"  "<< this->twist_msg.linear.x << " " <<  this->twist_msg.linear.y << " " << this->twist_msg.linear.z << " " << this->twist_msg.angular.z << endl;
+            cout <<deltat << " " << estX <<":"<<estY<<":"<<estZ<<"  "<< this->twist_msg.linear.x << " " <<  this->twist_msg.linear.y << " " << this->twist_msg.linear.z << " " << this->twist_msg.angular.z << endl;
 
 
         this->twist_pub.publish(this->twist_msg);
