@@ -16,7 +16,7 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <string.h>
-
+#include <signal.h>
 
 // ardrone_autonomy
 #include "ardrone_autonomy/CamSelect.h"
@@ -34,6 +34,16 @@ using geometry_msgs::Twist;
 using sensor_msgs::Image;
 using ardrone_autonomy::Navdata;
 using ardrone_autonomy::CamSelect;
+
+ArdroneThinc * at;
+ros::AsyncSpinner  *spinner;
+
+void mySigintHandler(int sig)
+{
+  at->stop();  //this is needed because these ros dipshits can't correctly handle threads, probably can be removed after they buy a clue
+  spinner->stop();
+  ros::shutdown();
+}
 
 /**
  * @file	SmartMain.cpp
@@ -67,7 +77,7 @@ int main(int argc, char *argv[]) {
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
-    ros::AsyncSpinner spinner(2);
+    spinner = new ros::AsyncSpinner(2);
 
     // data container
 
@@ -79,42 +89,43 @@ int main(int argc, char *argv[]) {
         cout << endl;
         exit(1);
     }
-    ArdroneThinc at(atoi(argv[4]), atoi(argv[5]), 2);
-    at.simDrones = false;
+    at = new ArdroneThinc(atoi(argv[4]), atoi(argv[5]), 2);
+    signal(SIGINT, mySigintHandler);
+    at->simDrones = false;
     // grid size
-    at.columns = atoi(argv[1]);
-    at.rows = atoi(argv[2]);
+    at->columns = atoi(argv[1]);
+    at->rows = atoi(argv[2]);
 
     // initial position and id
-    at.id = atoi(argv[3]);
+    at->id = atoi(argv[3]);
 
     if (argc == 7 && (strcmp(argv[6],"s") == 0))
     {
      //we are simulating
-     at.simDrones = true;
+     at->simDrones = true;
 
     }
 
 	// publishers
-    at.launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
-    at.land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
-    at.reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
-    at.twist_pub = n.advertise<Twist>("cmd_vel", 10);
-    at.thresh_pub = n.advertise<Image>("img_thresh", 10);
+    at->launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
+    at->land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
+    at->reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
+    at->twist_pub = n.advertise<Twist>("cmd_vel", 10);
+    at->thresh_pub = n.advertise<Image>("img_thresh", 10);
 
     // subscribers
-    at.cam_sub = n.subscribe<Image>("ardrone/image_raw", 1, &ArdroneThinc::CamCallback, &at);
-    at.nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, &at);
+    at->cam_sub = n.subscribe<Image>("ardrone/image_raw", 1, &ArdroneThinc::CamCallback, at);
+    at->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, at);
 
     // services
-    at.waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, &at);
-    at.printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThinc::PrintNavdataCallback, &at);
+    at->waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, at);
+    at->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThinc::PrintNavdataCallback, at);
 
     // service clients
-    at.camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
-    at.trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
-    at.waypoint_cli = n.serviceClient<Waypoint>("waypoint");
-    at.printnavdata_cli = n.serviceClient<PrintNavdata>("printnavdata");
+    at->camchan_cli = n.serviceClient<CamSelect>("ardrone/setcamchannel", 1);
+    at->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
+    at->waypoint_cli = n.serviceClient<Waypoint>("waypoint");
+    at->printnavdata_cli = n.serviceClient<PrintNavdata>("printnavdata");
 
     // let roscore catch up
     ros::Duration(1.0).sleep();
@@ -124,20 +135,20 @@ int main(int argc, char *argv[]) {
         // set camera to bottom
         ardrone_autonomy::CamSelect camchan_req;
         camchan_req.request.channel = 1;
-        at.camchan_cli.call(camchan_req);
+        at->camchan_cli.call(camchan_req);
 
         // call flat trim - calibrate to flat surface
         ssrv::Empty trim_req;
-        at.trim_cli.call(trim_req);
-        if(at.simDrones == true){
+        at->trim_cli.call(trim_req);
+        if(at->simDrones == true){
             // takeoff and hover
-            at.twist_msg.linear.x = 0;
-            at.twist_msg.linear.y = 0;
-            at.twist_msg.linear.z = 0;
-            at.twist_msg.angular.x = 0;
-            at.twist_msg.angular.y = 0;
-            at.twist_msg.angular.z = 0;
-            at.launch_pub.publish(at.empty_msg);
+            at->twist_msg.linear.x = 0;
+            at->twist_msg.linear.y = 0;
+            at->twist_msg.linear.z = 0;
+            at->twist_msg.angular.x = 0;
+            at->twist_msg.angular.y = 0;
+            at->twist_msg.angular.z = 0;
+            at->launch_pub.publish(at->empty_msg);
 
             ardrone_thinc::Waypoint waypoint_msg;
             waypoint_msg.request.x = 0;
@@ -147,13 +158,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    spinner.start();
+    spinner->start();
     ros::waitForShutdown();
-    if(at.id == 0)
+    if(at->id == 0)
 	remove("currentNavdata0.txt");
-    else if(at.id == 1)
+    else if(at->id == 1)
 	remove("currentNavdata1.txt");
-    else if(at.id == 2)
+    else if(at->id == 2)
 	remove("currentNavdata2.txt");
     return 0;
 }

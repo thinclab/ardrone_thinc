@@ -148,8 +148,8 @@ ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
     flying = false;
 
     // hard code these for now
-    x_scale = -20;
-    y_scale = 20;
+    x_scale = -2;
+    y_scale = 2;
 
     getCenterOf(startx, starty, this->estX, this->estY);
 
@@ -157,6 +157,13 @@ ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
     goalY = this->estY;
     goalZ = elev;
 
+    rotz = 0;
+    vtheta = 0;
+    stopped = false;
+}
+
+void ArdroneThinc::stop() {
+    stopped = true;
 }
 
 /**
@@ -166,6 +173,11 @@ ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
 void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
     this->rotx = nav->rotX;
     this->roty = nav->rotY;
+    this->vtheta = (nav->rotZ - this->rotz) / (nav->tm - this->lastTimestamp);
+    if (isnan(this->vtheta))
+        this->vtheta = 0;
+    this->rotz = nav->rotZ;
+
     this->sonar = nav->altd;
     this->batteryPercent = nav->batteryPercent;
     this->vx = nav->vx;
@@ -295,11 +307,13 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
 
     while (flying && distanceToGoal() > tolerance) {
+
         ros::Duration(0.5).sleep();
 
-        if(!ros::ok()) {
-            return false;
+        if(stopped) {
+             return false;
         }
+
     }
 
     return true;
@@ -329,8 +343,8 @@ double ArdroneThinc::distanceToGoal() {
 
 void ArdroneThinc::estimateState(double deltat) {
     deltat /= 100000;
-    this->estX += this->vx / 1000 * deltat + this->aX / 1000 * deltat * deltat;
-    this->estY += this->vy / 1000 * deltat + this->aY / 1000 * deltat * deltat;
+    this->estX += this->vx / 1000 * deltat + this->aX * 9.8 * deltat * deltat;
+    this->estY += this->vy / 1000 * deltat + this->aY * 9.8 * deltat * deltat;
     this->estZ = this->sonar / 1000;
 
 }
@@ -345,8 +359,10 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
         double distZ = goalZ - estZ;
 
         // check if we're within tolerance, if so then hover
+        // this is wrong, c should be 2 * sqrt(k * m)
+        double c = 15 * sqrt( k * ardroneMass );
 
-        if (distX*distX + distY*distY + distZ*distZ < this->tolerance*this->tolerance) {
+        if (distX*distX + distY*distY + distZ*distZ + rotz*rotz < this->tolerance*this->tolerance) {
             if (! this->hovering) {
                 this->twist_msg.linear.x = 0;
                 this->twist_msg.linear.y = 0;
@@ -361,8 +377,6 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
         }
         this->hovering = false;
 
-        // this is wrong, c should be 2 * sqrt(k * m)
-        double c = 15 * sqrt( k * ardroneMass );
 
         double springForceX = k * distX;
         double dampingForceX = -c * this->vx / 1000;
@@ -384,12 +398,30 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
         double deltaVy = accelY * deltat;
         double deltaVz = accelZ * deltat;
 
+
+        double distTheta = -rotz;
+        double springForceTheta = k * distTheta;
+        double dampingForceTheta = -c * this->vtheta;
+        double totalForceTheta = springForceTheta + dampingForceTheta;
+        double accelTheta = totalForceTheta / ardroneMass;
+        double deltaTheta = accelTheta * deltat;
+
+
         this->twist_msg.linear.x = this->vx / 1000 + deltaVx;
         this->twist_msg.linear.y = this->vy / 1000 + deltaVy;
         this->twist_msg.linear.z = this->vz / 1000 + deltaVz;
         this->twist_msg.angular.x = 0;
         this->twist_msg.angular.y = 0;
-        this->twist_msg.angular.z = 0;
+        this->twist_msg.angular.z = this->vtheta + deltaTheta;
+        if (isnan(this->twist_msg.angular.z))
+            this->twist_msg.angular.z = 0;
+
+        static int count = 0;
+        count ++;
+        if (count % 50 == 0)
+            cout << estX <<":"<<estY<<":"<<estZ<<"  "<< this->twist_msg.linear.x << " " <<  this->twist_msg.linear.y << " " << this->twist_msg.linear.z << " " << this->twist_msg.angular.z << endl;
+
+
         this->twist_pub.publish(this->twist_msg);
     }
 

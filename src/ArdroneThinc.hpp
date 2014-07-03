@@ -172,12 +172,12 @@ class ArdroneThinc {
 	int id;
 
         // callback persistent storage
-        double rotx, roty;
+        double rotx, roty, rotz;
 
 	/**
 	 * @brief Drone's current sonar reading
 	 */
-        int sonar;
+        double sonar;
 
 	/**
 	 * @brief Drone's current battery reading
@@ -291,6 +291,8 @@ class ArdroneThinc {
 
         void land();
 
+    void stop();
+
     private:
         // these are the variables used to estimate the drone's position
         double estX, estY, estZ; // in meters
@@ -304,6 +306,8 @@ class ArdroneThinc {
         double tolerance;
         double k; // in newtons per meter
 
+        double vtheta;
+
 
         void estimateState(double deltat);
         void springBasedCmdVel(double deltat);
@@ -312,6 +316,7 @@ class ArdroneThinc {
         void getCenterOf(int X, int Y, double & x, double & y);
         double distanceToGoal();
 
+        bool stopped;
 };
 
 #endif
