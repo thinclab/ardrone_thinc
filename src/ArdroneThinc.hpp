@@ -3,6 +3,7 @@
 
 // core
 #include "ros/ros.h"
+#include "tf/transform_datatypes.h"
 
 // messages
 #include "sensor_msgs/Image.h"
@@ -13,9 +14,7 @@
 #include "ardrone_autonomy/Navdata.h"
 #include "ardrone_thinc/Waypoint.h"
 #include "ardrone_thinc/PrintNavdata.h"
-
-// persistent storage
-#include "opencv2/imgproc/imgproc.hpp"
+#include "tum_ardrone/filter_state.h"
 
 //sockets
 #include <sys/socket.h>
@@ -38,6 +37,7 @@ using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
 using ardrone_thinc::PrintNavdata;
+using tum_ardrone::filter_state;
 
 /**
  * Enumerated movement directions
@@ -318,18 +318,106 @@ class ArdroneThincInSim : public ArdroneThinc {
         */
         vector<unsigned int> tags_type;
 
-        /**
-        * @brief Circles, used in deprecated CamCallback
-        */
-        vector<cv::Vec3f> circles;
+
+};
+
+
+
+class ArdroneThincInReality : public ArdroneThinc {
+    public:
+
+        ArdroneThincInReality(int grid_count_x, int grid_count_y, int startx, int starty, double desired_elev_in_meters, double grid_size_x_in_meters, double grid_size_y_in_meters);
+
+
 
         /**
-        * @brief Image vector, used in deprecated CamCallback
+         * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
+         * @param &req Waypoint request sent, with drone ID and desired location
+         * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
+         * @return Boolean denoting whether the call was successful
+         */
+        virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
+
+        /**
+         * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
+         * @param &req PrintNavdata request, an empty message
+         * @param &res PrintNavdata response, an empty message
+         * @return Boolean denoting whether the call was successful
+         */
+        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+
+        // helper functions
+
+
+        virtual void land();
+
+        virtual void stop();
+
+        virtual void takeoff();
+
+
+
+        void PoseCallback(const tum_ardrone::filter_stateConstPtr& fs);
+
+    private:
+
+
+       bool stopped;
+
+
+        int startx, starty;
+
+        /**
+        * @brief Publisher for launch topic, uses takeoff service
         */
-        vector<cv::Vec3f> img_vec;
+        Publisher launch_pub;
+
+        /**
+        * @brief Publisher for land topic, uses land service
+        */
+        Publisher land_pub;
+
+        /**
+        * @brief Publisher for reset topic, uses reset service
+        */
+        Publisher reset_pub;
 
 
+        Publisher tum_command;
 
+        Subscriber tum_pose;
+
+        Subscriber nav_sub;
+
+        /**
+        * @brief Service client for flattrim service
+        */
+        ServiceClient trim_cli;
+
+        /**
+        * @brief Service server for waypoint service
+        */
+        ServiceServer waypoint_srv;
+
+        /**
+        * @brief Service client for waypoint service
+        */
+        ServiceClient waypoint_cli;
+
+
+        /**
+        * @brief Service server for printnavdata service
+        */
+        ServiceServer printnavdata_srv;
+
+        bool transformBuilt;
+
+        tf::Transform grid_to_tum;
+        tf::Vector3 grid_to_tum_scale;
+
+
+        tf::Vector3 cur_goal;
+        tf::Vector3 cur_tum_pos;
 };
 
 #endif

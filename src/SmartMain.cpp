@@ -17,7 +17,6 @@
 // ardrone_thinc
 #include "ArdroneThinc.hpp"
 
-using namespace cv;
 using namespace std;
 
 namespace smsg = std_msgs;
@@ -97,6 +96,10 @@ int main(int argc, char *argv[]) {
     {
         //we are simulating
         at = new ArdroneThincInSim(columns, rows, startcol, startrow, elev, colsize, rowsize);
+
+    } else {
+        //we are a real boy
+        at = new ArdroneThincInReality(columns, rows, startcol, startrow, elev, colsize, rowsize);
 
     }
 

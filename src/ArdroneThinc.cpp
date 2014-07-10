@@ -4,8 +4,10 @@
 #include "std_msgs/Empty.h"
 #include "std_msgs/Header.h"
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/Pose.h"
 #include "ardrone_autonomy/Navdata.h"
 #include "std_srvs/Empty.h"
+#include "std_msgs/String.h"
 
 // ardrone_thinc
 #include "ArdroneThinc.hpp"
@@ -390,5 +392,138 @@ void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 
         this->twist_pub.publish(this->twist_msg);
     }
+
+}
+
+
+
+
+
+
+
+ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int starty, double desired_elev_in_meters, double grid_size_x_in_meters, double grid_size_y_in_meters) {
+
+    ros::NodeHandle n;
+
+	// publishers
+    this->launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
+    this->land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
+    this->reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
+    this->tum_command = n.advertise<std_msgs::String>("tum_ardrone/com", 5);
+
+    // subscribers
+    this->tum_pose = n.subscribe<tum_ardrone::filter_state>("ardrone/predictedPose", 1, &ArdroneThincInReality::PoseCallback, this);
+    this->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThincInReality::NavdataCallback, this);
+
+    // services
+    this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInReality::WaypointCallback, this);
+    this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInReality::PrintNavdataCallback, this);
+
+    // service clients
+    this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
+    this->waypoint_cli = n.serviceClient<Waypoint>("waypoint");
+
+    // let roscore catch up
+    ros::Duration(1.5).sleep();
+
+
+    // need to initialize the transform from the grid's coordinate system to tum's
+
+    // wait until ptam's state goes to 3, 4, or 5, read in the elevation from navdata, now build a transform from the grid coordinate (i am in square x,y) to the estimated pose x,y
+    // and from the sonar's elevation to tum's z component.
+    // we can then request to go to a certain point in grid space by transforming into tum space
+
+    transformBuilt = false;
+
+    grid_to_tum_scale = tf::Vector3(grid_size_x_in_meters, grid_size_y_in_meters, 1.0);
+}
+
+
+bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+
+    while (! transformBuilt) {
+
+        ros::Duration(0.5).sleep();
+
+        if(stopped) {
+             return false;
+        }
+
+    }
+
+    tf::Vector3 newGridPos(req.x, req.y, req.z);
+
+    newGridPos *= grid_to_tum_scale;
+
+//    tf::Transform newGridPos(grid_to_tum.getRotation(), newGridPos + grid_to_tum.getOrigin());
+
+    tf::Transform newGridTrans(tf::Quaternion::getIdentity(), newGridPos);
+
+    tf::Transform newTumPos = grid_to_tum * newGridTrans;
+    // this is our new goal
+
+    double roll, pitch, yaw;
+    tf::Matrix3x3(newTumPos.getRotation()).getRPY(roll, pitch, yaw);
+
+    char msg[256];
+	sprintf(msg, "goto %f %f %f %f\n", newTumPos.getOrigin().x(), newTumPos.getOrigin().y(), newTumPos.getOrigin().z(), yaw);
+
+    std_msgs::String outmsg;
+    outmsg.data = std::string(msg);
+
+    tum_command.publish(outmsg);
+
+    cur_goal = newTumPos.getOrigin();
+
+    while ((cur_goal - cur_tum_pos).magnitude > tolerance) {
+        ros::Duration(0.5).sleep();
+
+        if(stopped) {
+             return false;
+        }
+    }
+
+    return true;
+}
+
+bool ArdroneThincInReality::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
+    return false;
+}
+
+void ArdroneThincInReality::land() {
+
+}
+
+void ArdroneThincInReality::stop() {
+
+}
+
+void ArdroneThincInReality::takeoff() {
+}
+
+
+
+void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr& fs) {
+
+
+    if (!transformBuilt) {
+        // Is tum ready and are we flying?  If so, pull the x, y, z and yaw out and build the transform
+
+        if (fs.ptamState >= 3 && fs.ptamState <= 5) {
+
+
+            transformBuilt = true;
+        } else {
+            return;
+        }
+    }
+
+
+    cur_tum_pos = tf::Vector3(fs.x, fx.y, fx.z);
+
+}
+
+
+void ArdroneThincInReality::NavdataCallback(const NavdataConstPtr& nav) {
 
 }
