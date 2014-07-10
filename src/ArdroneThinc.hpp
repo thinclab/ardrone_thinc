@@ -115,7 +115,7 @@ class ArdroneThincInSim : ArdroneThinc {
          * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
          * @return Boolean denoting whether the call was successful
          */
-        bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
+        virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
 
         /**
          * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
@@ -123,14 +123,16 @@ class ArdroneThincInSim : ArdroneThinc {
          * @param &res PrintNavdata response, an empty message
          * @return Boolean denoting whether the call was successful
          */
-        bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
 
         // helper functions
 
 
-        void land();
+        virtual void land();
 
-        void stop();
+        virtual void stop();
+
+        virtual void takeoff();
 
     private:
 
@@ -160,188 +162,163 @@ class ArdroneThincInSim : ArdroneThinc {
 
 
         /**
-	 * @brief Publisher for launch topic, uses takeoff service
-	 */
+        * @brief Publisher for launch topic, uses takeoff service
+        */
         Publisher launch_pub;
 
-	/**
-	 * @brief Publisher for land topic, uses land service
-	 */
+        /**
+        * @brief Publisher for land topic, uses land service
+        */
         Publisher land_pub;
 
-	/**
-	 * @brief Publisher for reset topic, uses reset service
-	 */
+        /**
+        * @brief Publisher for reset topic, uses reset service
+        */
         Publisher reset_pub;
 
-	/**
-	 * @brief Publisher for twist topic, uses cmd_vel topic
-	 */
+        /**
+        * @brief Publisher for twist topic, uses cmd_vel topic
+        */
         Publisher twist_pub;
 
-	/**
-	 * @brief Publisher for image topic, uses img_thresh topic
-	 */
-        Publisher thresh_pub;
-
-	/**
-	 * @brief Subscriber for camera topic, uses image_raw topic
-	 */
-        Subscriber cam_sub;
-
-	/**
-	 * @brief Subscriber for navdata topic, uses navdata topic
-	 */
+        /**
+        * @brief Subscriber for navdata topic, uses navdata topic
+        */
         Subscriber nav_sub;
 
-	/**
-	 * @brief Service client for setcamchannel service
-	 */
-        ServiceClient camchan_cli;
-
-	/**
-	 * @brief Service client for flattrim service
-	 */
+        /**
+        * @brief Service client for flattrim service
+        */
         ServiceClient trim_cli;
 
-	/**
-	 * @brief Service client for waypoint service
-	 */
-        ServiceClient waypoint_cli;
-
-	/**
-	 * @brief Service server for waypoint service
-	 */
+        /**
+        * @brief Service server for waypoint service
+        */
         ServiceServer waypoint_srv;
 
-	/**
-	 * @brief Service client for printnavdata service
-	 */
-        ServiceClient printnavdata_cli;
-
-	/**
-	 * @brief Service server for printnavdata service
-	 */
+        /**
+        * @brief Service server for printnavdata service
+        */
         ServiceServer printnavdata_srv;
 
-	/**
-	 * @brief Empty message, reused for communication between ArdroneThinc and SmartMain
-	 */
+        /**
+        * @brief Empty message, reused for communication between ArdroneThinc and SmartMain
+        */
         smsg::Empty empty_msg;
-	/**
-	 * @brief Twist message, used in conjunction with cmd_vel topic to implement Waypoint service
-	 */
+        /**
+        * @brief Twist message, used in conjunction with cmd_vel topic to implement Waypoint service
+        */
         Twist twist_msg;
 
         // grid information
 
-	/**
-	 * @brief Columns in drone's grid
-	 */
+        /**
+        * @brief Columns in drone's grid
+        */
         int columns;
 
-	/**
-	 * @brief Rows in drone's grid
-	 */
-	int rows;
+        /**
+        * @brief Rows in drone's grid
+        */
+        int rows;
 
-    int x_scale;
-	int y_scale;
+        int x_scale;
+        int y_scale;
 
-	//Real or simulated drones
-	/**
-	 * @brief Boolean that tells whether this drone's node is a real or simulated drone
-	 */
-	bool simDrones;
+        //Real or simulated drones
+        /**
+        * @brief Boolean that tells whether this drone's node is a real or simulated drone
+        */
+        bool simDrones;
 
         // grid position, interoperability id
 
-	/**
-	 * @brief Drone's unique ID
-	 */
-	int id;
+        /**
+        * @brief Drone's unique ID
+        */
+        int id;
 
         // callback persistent storage
         double rotx, roty, rotz;
 
-	/**
-	 * @brief Drone's current sonar reading
-	 */
+        /**
+        * @brief Drone's current sonar reading
+        */
         double sonar;
 
-	/**
-	 * @brief Drone's current battery reading
-	 */
+        /**
+        * @brief Drone's current battery reading
+        */
         float batteryPercent;
 
-	/**
-	 * @brief Drone's current sideways velocity reading
-	 */
-	float vx;
+        /**
+        * @brief Drone's current sideways velocity reading
+        */
+        float vx;
 
-	/**
-	 * @brief Drone's current forward velocity reading
-	 */
-	float vy;
+        /**
+        * @brief Drone's current forward velocity reading
+        */
+        float vy;
 
-	/**
-	 * @brief Drone's current vertical velocity reading
-	 */
-	float vz;
+        /**
+        * @brief Drone's current vertical velocity reading
+        */
+        float vz;
 
-	/**
-	 * @brief Drone's current battery, represented as human-readable string
-	 */
-	string batteryCurrent;
+        /**
+        * @brief Drone's current battery, represented as human-readable string
+        */
+        string batteryCurrent;
 
-	/**
-	 * @brief Drone's current sonar, represented as human-readable string
-	 */
-	string sonarCurrent;
+        /**
+        * @brief Drone's current sonar, represented as human-readable string
+        */
+        string sonarCurrent;
 
-	/**
-	 * @brief Drone's current forward velocity, represented as human-readable string
-	 */
-	string forwardVelocityCurrent;
+        /**
+        * @brief Drone's current forward velocity, represented as human-readable string
+        */
+        string forwardVelocityCurrent;
 
-	/**
-	 * @brief Drone's current sideways velocity, represented as human-readable string
-	 */
-	string sidewaysVelocityCurrent;
+        /**
+        * @brief Drone's current sideways velocity, represented as human-readable string
+        */
+        string sidewaysVelocityCurrent;
 
-	/**
-	 * @brief Drone's current vertical velocity, represented as human-readable string
-	 */
-	string verticalVelocityCurrent;
+        /**
+        * @brief Drone's current vertical velocity, represented as human-readable string
+        */
+        string verticalVelocityCurrent;
 
-	/**
-	 * @brief Drone's current tag count, represented as human-readable string
-	 */
-	string tagsCountCurrent;
+        /**
+        * @brief Drone's current tag count, represented as human-readable string
+        */
+        string tagsCountCurrent;
 
-	/**
-	 * @brief Drone's current tag spotted type, represented as human-readable string
-	 */
-	string tagsTypeCurrent;
+        /**
+        * @brief Drone's current tag spotted type, represented as human-readable string
+        */
+        string tagsTypeCurrent;
 
-	/**
-	 * @brief Drone's current tag count reading
-	 */
-	unsigned int tags_count;
+        /**
+        * @brief Drone's current tag count reading
+        */
+        unsigned int tags_count;
 
-	/**
-	 * @brief Drone's current tag type reading, vector
-	 */
-	vector<unsigned int> tags_type;
+        /**
+        * @brief Drone's current tag type reading, vector
+        */
+        vector<unsigned int> tags_type;
 
-	/**
-	 * @brief Circles, used in deprecated CamCallback
-	 */
+        /**
+        * @brief Circles, used in deprecated CamCallback
+        */
         vector<cv::Vec3f> circles;
 
-	/**
-	 * @brief Image vector, used in deprecated CamCallback
-	 */
+        /**
+        * @brief Image vector, used in deprecated CamCallback
+        */
         vector<cv::Vec3f> img_vec;
 
 

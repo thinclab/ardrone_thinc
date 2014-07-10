@@ -54,7 +54,7 @@ using ardrone_thinc::PrintNavdata;
  * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
  */
 
-ArdroneThincInSim::ArdroneThincInSim(int startx, int starty, double elev) {
+ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty, double desired_elev_in_meters, double grid_size_x_in_meters, double grid_size_y_in_meters) {
 
     k = 15;
     tolerance = 0.3;
@@ -63,21 +63,43 @@ ArdroneThincInSim::ArdroneThincInSim(int startx, int starty, double elev) {
     flying = false;
 
     // hard code these for now
-    x_scale = -2;
-    y_scale = 2;
+    x_scale = -grid_size_x_in_meters;
+    y_scale = grid_size_y_in_meters;
 
     getCenterOf(startx, starty, this->estX, this->estY);
 
     goalX = this->estX;
     goalY = this->estY;
-    goalZ = elev;
+    goalZ = desired_elev_in_meters;
 
     rotz = 0;
     vtheta = 0;
     stopped = false;
+
+    this->cols = cols;
+    this->rows = rows;
+
+
+
+	// publishers
+    this->launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
+    this->land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
+    this->reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
+    this->twist_pub = n.advertise<Twist>("cmd_vel", 10);
+
+    // subscribers
+    at->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, at);
+
+    // services
+    at->waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, at);
+    at->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThinc::PrintNavdataCallback, at);
+
+    // service clients
+    at->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
+
 }
 
-void ArdroneThincInSim::stop() {
+virtual void ArdroneThincInSim::stop() {
     stopped = true;
 }
 
@@ -206,7 +228,7 @@ return true;
  * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
  * @return Boolean denoting whether the call was successful
  */
-bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+virtual bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
     cout << "waypoint request: ";
     cout << req.x << ", " << req.y << endl;
 
