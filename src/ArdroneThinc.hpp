@@ -65,10 +65,99 @@ enum dir { LEFT, RIGHT, UP, DOWN, HOV };
  * Made for cooperative use with UGA THINC Lab's "ardrone_thinc" package and Autonomy Lab's "ardrone_autonomy" package.
  */
 
+
+
 class ArdroneThinc {
+
     public:
 
-        ArdroneThinc(int startx, int starty, double elev);
+        virtual void stop();
+        virtual void takeoff();
+        virtual void land();
+
+        /**
+         * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
+         * @param &req Waypoint request sent, with drone ID and desired location
+         * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
+         * @return Boolean denoting whether the call was successful
+         */
+        virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
+
+        /**
+         * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
+         * @param &req PrintNavdata request, an empty message
+         * @param &res PrintNavdata response, an empty message
+         * @return Boolean denoting whether the call was successful
+         */
+        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+
+
+};
+
+class ArdroneThincInSim : ArdroneThinc {
+    public:
+
+        ArdroneThincInSim(int grid_count_x, int grid_count_y, int startx, int starty, double desired_elev_in_meters, double grid_size_x_in_meters, double grid_size_y_in_meters);
+
+        // subscriber callbacks
+
+        /**
+         * Navdata Callback function. Sets drone's data members to values in navdata message
+         * @param nav The navdata message returned, with all navdata members available
+         */
+        void NavdataCallback(const NavdataConstPtr& nav);
+
+            // service callbacks
+
+        /**
+         * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
+         * @param &req Waypoint request sent, with drone ID and desired location
+         * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
+         * @return Boolean denoting whether the call was successful
+         */
+        bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
+
+        /**
+         * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
+         * @param &req PrintNavdata request, an empty message
+         * @param &res PrintNavdata response, an empty message
+         * @return Boolean denoting whether the call was successful
+         */
+        bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+
+        // helper functions
+
+
+        void land();
+
+        void stop();
+
+    private:
+
+        // these are the variables used to estimate the drone's position
+        double estX, estY, estZ; // in meters
+        double aX, aY; // in meters a second second
+        double lastTimestamp; // in microseconds !
+
+        double goalX, goalY, goalZ; // in meters
+        bool hovering;
+        bool flying;
+        double ardroneMass; // in kilograms
+        double tolerance;
+        double k; // in newtons per meter
+
+        double vtheta;
+
+
+        void estimateState(double deltat);
+        void springBasedCmdVel(double deltat);
+
+        void getStateFor(double x, double y, int & X, int & Y);
+        void getCenterOf(int X, int Y, double & x, double & y);
+        double distanceToGoal();
+
+        bool stopped;
+
 
         /**
 	 * @brief Publisher for launch topic, uses takeoff service
@@ -155,7 +244,8 @@ class ArdroneThinc {
 	 * @brief Rows in drone's grid
 	 */
 	int rows;
-        int x_scale;
+
+    int x_scale;
 	int y_scale;
 
 	//Real or simulated drones
@@ -254,69 +344,8 @@ class ArdroneThinc {
 	 */
         vector<cv::Vec3f> img_vec;
 
-        // subscriber callbacks
-
-	/**
-	 * Camera Callback function. Now deprecated. Formerly meant to help drone center self on grid cell.
-	 * @param rosimg The sensor message (image) returned by the currently toggled camera
-	 */
-        void CamCallback(const ImageConstPtr& rosimg);
-
-	/**
-	 * Navdata Callback function. Sets drone's data members to values in navdata message
-	 * @param nav The navdata message returned, with all navdata members available
-	 */
-        void NavdataCallback(const NavdataConstPtr& nav);
-
-        // service callbacks
-
-	/**
-	 * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
-	 * @param &req Waypoint request sent, with drone ID and desired location
-	 * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
-	 * @return Boolean denoting whether the call was successful
-	 */
-        bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
-
-	/**
-	 * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
-	 * @param &req PrintNavdata request, an empty message
-	 * @param &res PrintNavdata response, an empty message
-	 * @return Boolean denoting whether the call was successful
-	 */
- 	bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
-
-        // helper functions
 
 
-        void land();
-
-    void stop();
-
-    private:
-        // these are the variables used to estimate the drone's position
-        double estX, estY, estZ; // in meters
-        double aX, aY; // in meters a second second
-        double lastTimestamp; // in microseconds !
-
-        double goalX, goalY, goalZ; // in meters
-        bool hovering;
-        bool flying;
-        double ardroneMass; // in kilograms
-        double tolerance;
-        double k; // in newtons per meter
-
-        double vtheta;
-
-
-        void estimateState(double deltat);
-        void springBasedCmdVel(double deltat);
-
-        void getStateFor(double x, double y, int & X, int & Y);
-        void getCenterOf(int X, int Y, double & x, double & y);
-        double distanceToGoal();
-
-        bool stopped;
 };
 
 #endif

@@ -64,7 +64,7 @@ using ardrone_thinc::PrintNavdata;
  * Camera Callback function. Now deprecated. Formerly meant to help drone center self on grid cell.
  * @param rosimg The sensor message (image) returned by the currently toggled camera
  */
-void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
+void ArdroneThincInSim::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
 /*	cout << "Entered cam callback method" << endl;
     // convert ros image to opencv image
     cv_bridge::CvImagePtr orig = cv_bridge::toCvCopy(rosimg);
@@ -139,7 +139,7 @@ void ArdroneThinc::CamCallback(const sensor_msgs::ImageConstPtr& rosimg) {
     twist_pub.publish(twist_msg);    */
 }
 
-ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
+ArdroneThincInSim::ArdroneThincInSim(int startx, int starty, double elev) {
 
     k = 15;
     tolerance = 0.3;
@@ -162,7 +162,7 @@ ArdroneThinc::ArdroneThinc(int startx, int starty, double elev) {
     stopped = false;
 }
 
-void ArdroneThinc::stop() {
+void ArdroneThincInSim::stop() {
     stopped = true;
 }
 
@@ -170,7 +170,7 @@ void ArdroneThinc::stop() {
  * Navdata Callback function. Sets drone's data members to values in navdata message
  * @param nav The navdata message returned, with all navdata members available
  */
-void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
+void ArdroneThincInSim::NavdataCallback(const NavdataConstPtr& nav) {
     this->rotx = nav->rotX;
     this->roty = nav->rotY;
 //    this->vtheta = (nav->rotZ - this->rotz) / ((nav->tm - this->lastTimestamp) / 1000000.0);
@@ -203,7 +203,7 @@ void ArdroneThinc::NavdataCallback(const NavdataConstPtr& nav) {
  * @param &res PrintNavdata response, an empty message
  * @return Boolean denoting whether the call was successful
  */
-bool ArdroneThinc::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
+bool ArdroneThincInSim::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
 	cout<< "Navdata print request"<< endl;
 
     float batteryConvert = this->batteryPercent;
@@ -291,7 +291,7 @@ return true;
  * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
  * @return Boolean denoting whether the call was successful
  */
-bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
     cout << "waypoint request: ";
     cout << req.x << ", " << req.y << endl;
 
@@ -322,18 +322,18 @@ bool ArdroneThinc::WaypointCallback(Waypoint::Request &req, Waypoint::Response &
 
 }
 
-void ArdroneThinc::getStateFor(double x, double y, int & X, int & Y) {
+void ArdroneThincInSim::getStateFor(double x, double y, int & X, int & Y) {
     X = (int)(y / y_scale);
     Y = (int)(x / x_scale);
 }
 
-void ArdroneThinc::getCenterOf(int X, int Y, double & x, double & y) {
+void ArdroneThincInSim::getCenterOf(int X, int Y, double & x, double & y) {
     x = ((double)Y + .5) * y_scale;
     y = ((double)X + .5) * x_scale;
 }
 
 
-double ArdroneThinc::distanceToGoal() {
+double ArdroneThincInSim::distanceToGoal() {
    double distX = goalX - estX;
    double distY = goalY - estY;
    double distZ = goalZ - estZ;
@@ -342,16 +342,16 @@ double ArdroneThinc::distanceToGoal() {
 
 }
 
-void ArdroneThinc::estimateState(double deltat) {
+void ArdroneThincInSim::estimateState(double deltat) {
     deltat /= 1000000;
-    this->estX += this->vx / 1000 * deltat + this->aX * 9.8 * deltat * deltat;
-    this->estY += this->vy / 1000 * deltat + this->aY * 9.8 * deltat * deltat;
+    this->estX += this->vx / 1000 * deltat + 0.5 * this->aX * 9.8 * deltat * deltat;
+    this->estY += this->vy / 1000 * deltat + 0.5 * this->aY * 9.8 * deltat * deltat;
     this->estZ = this->sonar / 1000;
 
 }
 
 
-void ArdroneThinc::springBasedCmdVel(double deltat) {
+void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 
     if (flying == true) {
         deltat /= 100000; // This is wrong, but for some reason makes the simulation right GO ROS!!!
@@ -415,11 +415,6 @@ void ArdroneThinc::springBasedCmdVel(double deltat) {
         this->twist_msg.angular.z = this->vtheta + deltaTheta;
         if (isnan(this->twist_msg.angular.z))
             this->twist_msg.angular.z = 0;
-
-        static int count = 0;
-        count ++;
-        if (count % 50 == 0)
-            cout <<deltat << " " << estX <<":"<<estY<<":"<<estZ<<"  "<< this->twist_msg.linear.x << " " <<  this->twist_msg.linear.y << " " << this->twist_msg.linear.z << " " << this->twist_msg.angular.z << endl;
 
 
         this->twist_pub.publish(this->twist_msg);
