@@ -265,7 +265,7 @@ bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Respo
     cout << req.x << ", " << req.y << endl;
 
     // ensure valid grid cell
-    if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows) {
+    if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows || req.z > 2) {
         return false;
     }
 
@@ -275,6 +275,8 @@ bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Respo
 
     getCenterOf(req.x, req.y, this->goalX, this->goalY);
 
+    if (req.z > 0)
+        this->goalZ = req.z;
 
     while (flying && distanceToGoal() > tolerance) {
 

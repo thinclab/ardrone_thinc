@@ -121,7 +121,6 @@ int main(int argc, char **argv) {
 		waypoint.request.x = coords[0];
 		waypoint.request.y = coords[1];
 		waypoint.request.z = coords[2];
-		waypoint.request.id = id;
 		way_cli.call(waypoint);
 
 		// send waypoint response back
