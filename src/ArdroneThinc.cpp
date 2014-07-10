@@ -95,7 +95,7 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
 
     // service clients
     this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
-
+    this->waypoint_cli = n.serviceClient<Waypoint>("waypoint");
 
     // let roscore catch up
     ros::Duration(1.5).sleep();
@@ -127,6 +127,11 @@ void ArdroneThincInSim::takeoff() {
 
 void ArdroneThincInSim::land() {
 
+    ardrone_thinc::Waypoint gohome;
+    gohome.request.x = startx;
+    gohome.request.y = starty;
+
+    this->waypoint_cli.call(gohome);
     this->land_pub.publish(this->empty_msg);
 }
 

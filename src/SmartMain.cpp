@@ -4,13 +4,6 @@
 #include "std_msgs/Empty.h"
 #include "geometry_msgs/Twist.h"
 
-// opencv2
-#include "sensor_msgs/image_encodings.h"
-#include "image_transport/image_transport.h"
-#include "cv_bridge/cv_bridge.h"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
-
 // C++
 #include <cstdlib>
 #include <stdio.h>
@@ -38,6 +31,7 @@ ros::AsyncSpinner  *spinner;
 
 void mySigintHandler(int sig)
 {
+  at->land();
   at->stop();  //this is needed because these ros dipshits can't correctly handle threads, probably can be removed after they buy a clue
   spinner->stop();
   ros::shutdown();
@@ -80,7 +74,7 @@ int main(int argc, char *argv[]) {
     // data container
 
     // handle usage
-    if (argc != 8) {
+    if (argc != 9) {
         cout << "usage: ";
         cout << argv[0];
         cout << " <cols> <rows> <drone-col> <drone-row> <size of col in meters> <size of row in meters> <elevation in meters> <if flying simulated drones, last argument is 's', else last argument is 'r'";

@@ -199,6 +199,11 @@ class ArdroneThincInSim : public ArdroneThinc {
         ServiceServer waypoint_srv;
 
         /**
+        * @brief Service client for waypoint service
+        */
+        ServiceClient waypoint_cli;
+
+        /**
         * @brief Service server for printnavdata service
         */
         ServiceServer printnavdata_srv;
