@@ -5,13 +5,7 @@
 #include "std_msgs/Header.h"
 #include "geometry_msgs/Twist.h"
 #include "ardrone_autonomy/Navdata.h"
-
-// opencv2
-#include "sensor_msgs/image_encodings.h"
-#include "image_transport/image_transport.h"
-#include "cv_bridge/cv_bridge.h"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
+#include "std_srvs/Empty.h"
 
 // ardrone_thinc
 #include "ArdroneThinc.hpp"
@@ -24,12 +18,14 @@
 // degree to radian helper macro
 #define D2R(a) (a*M_PI/180)
 
-using namespace cv;
+
+namespace ssrv = std_srvs;
 
 using std::cout;
 using std::endl;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
+using ardrone_autonomy::Navdata;
 using ardrone_thinc::Waypoint;
 using ardrone_thinc::PrintNavdata;
 
@@ -66,6 +62,9 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     x_scale = -grid_size_x_in_meters;
     y_scale = grid_size_y_in_meters;
 
+    this->startx = startx;
+    this->starty = starty;
+
     getCenterOf(startx, starty, this->estX, this->estY);
 
     goalX = this->estX;
@@ -76,10 +75,10 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     vtheta = 0;
     stopped = false;
 
-    this->cols = cols;
+    this->columns = cols;
     this->rows = rows;
 
-
+    ros::NodeHandle n;
 
 	// publishers
     this->launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
@@ -88,19 +87,47 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     this->twist_pub = n.advertise<Twist>("cmd_vel", 10);
 
     // subscribers
-    at->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThinc::NavdataCallback, at);
+    this->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThincInSim::NavdataCallback, this);
 
     // services
-    at->waypoint_srv = n.advertiseService("waypoint", &ArdroneThinc::WaypointCallback, at);
-    at->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThinc::PrintNavdataCallback, at);
+    this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInSim::WaypointCallback, this);
+    this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInSim::PrintNavdataCallback, this);
 
     // service clients
-    at->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
+    this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
+
+
+    // let roscore catch up
+    ros::Duration(1.5).sleep();
+
+
+    // call flat trim - calibrate to flat surface
+    ssrv::Empty trim_req;
+    this->trim_cli.call(trim_req);
+
+    // takeoff and hover
+    this->twist_msg.linear.x = 0;
+    this->twist_msg.linear.y = 0;
+    this->twist_msg.linear.z = 0;
+    this->twist_msg.angular.x = 0;
+    this->twist_msg.angular.y = 0;
+    this->twist_msg.angular.z = 0;
+
+    takeoff();
 
 }
 
-virtual void ArdroneThincInSim::stop() {
+void ArdroneThincInSim::stop() {
     stopped = true;
+}
+
+void ArdroneThincInSim::takeoff() {
+    this->launch_pub.publish(this->empty_msg);
+}
+
+void ArdroneThincInSim::land() {
+
+    this->land_pub.publish(this->empty_msg);
 }
 
 /**
@@ -228,7 +255,7 @@ return true;
  * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
  * @return Boolean denoting whether the call was successful
  */
-virtual bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
     cout << "waypoint request: ";
     cout << req.x << ", " << req.y << endl;
 

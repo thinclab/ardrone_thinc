@@ -71,9 +71,9 @@ class ArdroneThinc {
 
     public:
 
-        virtual void stop();
-        virtual void takeoff();
-        virtual void land();
+        virtual void stop() = 0;
+        virtual void takeoff() = 0;
+        virtual void land() = 0;
 
         /**
          * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
@@ -81,7 +81,7 @@ class ArdroneThinc {
          * @param &res Waypoint response sent back, now empty; formerly printed new location on completion of movement
          * @return Boolean denoting whether the call was successful
          */
-        virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
+        virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) = 0;
 
         /**
          * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
@@ -89,12 +89,12 @@ class ArdroneThinc {
          * @param &res PrintNavdata response, an empty message
          * @return Boolean denoting whether the call was successful
          */
-        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) = 0;
 
 
 };
 
-class ArdroneThincInSim : ArdroneThinc {
+class ArdroneThincInSim : public ArdroneThinc {
     public:
 
         ArdroneThincInSim(int grid_count_x, int grid_count_y, int startx, int starty, double desired_elev_in_meters, double grid_size_x_in_meters, double grid_size_y_in_meters);
@@ -160,6 +160,8 @@ class ArdroneThincInSim : ArdroneThinc {
 
         bool stopped;
 
+
+        int startx, starty;
 
         /**
         * @brief Publisher for launch topic, uses takeoff service

@@ -2,7 +2,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Empty.h"
-#include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
 
 // opencv2
@@ -29,7 +28,6 @@ using namespace cv;
 using namespace std;
 
 namespace smsg = std_msgs;
-namespace ssrv = std_srvs;
 using geometry_msgs::Twist;
 using sensor_msgs::Image;
 using ardrone_autonomy::Navdata;
@@ -82,68 +80,36 @@ int main(int argc, char *argv[]) {
     // data container
 
     // handle usage
-    if (argc != 7) {
+    if (argc != 8) {
         cout << "usage: ";
         cout << argv[0];
-        cout << " <cols> <rows> <drone-id> <drone-col> <drone-row> <if flying simulated drones, last argument is 's', else last argument is 'r'";
+        cout << " <cols> <rows> <drone-col> <drone-row> <size of col in meters> <size of row in meters> <elevation in meters> <if flying simulated drones, last argument is 's', else last argument is 'r'";
         cout << endl;
         exit(1);
     }
-    at = new ArdroneThinc(atoi(argv[4]), atoi(argv[5]), 2);
-    signal(SIGINT, mySigintHandler);
-    at->simDrones = false;
+
+
     // grid size
-    at->columns = atoi(argv[1]);
-    at->rows = atoi(argv[2]);
+    int columns = atoi(argv[1]);
+    int rows = atoi(argv[2]);
+    int startcol = atoi(argv[3]);
+    int startrow = atoi(argv[4]);
+    double colsize = atof(argv[5]);
+    double rowsize = atof(argv[6]);
+    double elev = atof(argv[7]);
 
-    // initial position and id
-    at->id = atoi(argv[3]);
 
-    if (argc == 7 && (strcmp(argv[6],"s") == 0))
+    if (strcmp(argv[8],"s") == 0)
     {
-     //we are simulating
-     at->simDrones = true;
+        //we are simulating
+        at = new ArdroneThincInSim(columns, rows, startcol, startrow, elev, colsize, rowsize);
 
     }
 
-    // let roscore catch up
-    ros::Duration(1.0).sleep();
-
-    // set camchannel on drone and takeoff
-    if(ros::ok()) {
-        // set camera to bottom
-        ardrone_autonomy::CamSelect camchan_req;
-        camchan_req.request.channel = 1;
-        at->camchan_cli.call(camchan_req);
-
-        // call flat trim - calibrate to flat surface
-        ssrv::Empty trim_req;
-        at->trim_cli.call(trim_req);
-        if(at->simDrones == true){
-            // takeoff and hover
-            at->twist_msg.linear.x = 0;
-            at->twist_msg.linear.y = 0;
-            at->twist_msg.linear.z = 0;
-            at->twist_msg.angular.x = 0;
-            at->twist_msg.angular.y = 0;
-            at->twist_msg.angular.z = 0;
-            at->launch_pub.publish(at->empty_msg);
-
-            ardrone_thinc::Waypoint waypoint_msg;
-            waypoint_msg.request.x = 0;
-            waypoint_msg.request.y = 0;
-            waypoint_msg.request.z = 0;
-            waypoint_msg.request.id = 0;
-        }
-    }
+    signal(SIGINT, mySigintHandler);
 
     spinner->start();
     ros::waitForShutdown();
-    if(at->id == 0)
-	remove("currentNavdata0.txt");
-    else if(at->id == 1)
-	remove("currentNavdata1.txt");
-    else if(at->id == 2)
-	remove("currentNavdata2.txt");
+
     return 0;
 }
