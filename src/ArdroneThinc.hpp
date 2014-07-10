@@ -359,6 +359,8 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         void PoseCallback(const tum_ardrone::filter_stateConstPtr& fs);
 
+        void NavdataCallback(const NavdataConstPtr& nav);
+
     private:
 
 
@@ -418,6 +420,10 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         tf::Vector3 cur_goal;
         tf::Vector3 cur_tum_pos;
+
+        double tolerance;
+        double lastElev;
+
 };
 
 #endif

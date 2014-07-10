@@ -426,6 +426,7 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     // let roscore catch up
     ros::Duration(1.5).sleep();
 
+    tolerance = 0.1;
 
     // need to initialize the transform from the grid's coordinate system to tum's
 
@@ -475,7 +476,7 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
 
     cur_goal = newTumPos.getOrigin();
 
-    while ((cur_goal - cur_tum_pos).magnitude > tolerance) {
+    while ((cur_goal - cur_tum_pos).length() > tolerance) {
         ros::Duration(0.5).sleep();
 
         if(stopped) {
@@ -509,8 +510,16 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
     if (!transformBuilt) {
         // Is tum ready and are we flying?  If so, pull the x, y, z and yaw out and build the transform
 
-        if (fs.ptamState >= 3 && fs.ptamState <= 5) {
+        if (fs->ptamState >= 3 && fs->ptamState <= 5) {
 
+
+            // subtract the starting state scaled properly
+            // add the current x and y from tum
+            // save the orientation
+            tf::Quaternion q;
+            q.setRPY(0, 0, fs->yaw);
+
+            grid_to_tum = tf::Transform( q, tf::Vector3(fs->x - startx * grid_to_tum_scale.x() , fs->y - starty * grid_to_tum_scale.y(), fs->z - lastElev * grid_to_tum_scale.z()) );
 
             transformBuilt = true;
         } else {
@@ -519,11 +528,11 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
     }
 
 
-    cur_tum_pos = tf::Vector3(fs.x, fx.y, fx.z);
+    cur_tum_pos = tf::Vector3(fs->x, fs->y, fs->z);
 
 }
 
 
 void ArdroneThincInReality::NavdataCallback(const NavdataConstPtr& nav) {
-
+    lastElev = nav->altd / 1000.0;
 }
