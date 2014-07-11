@@ -103,10 +103,6 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     ros::Duration(1.5).sleep();
 
 
-    // call flat trim - calibrate to flat surface
-    ssrv::Empty trim_req;
-    this->trim_cli.call(trim_req);
-
     // takeoff and hover
     this->twist_msg.linear.x = 0;
     this->twist_msg.linear.y = 0;
@@ -124,6 +120,11 @@ void ArdroneThincInSim::stop() {
 }
 
 void ArdroneThincInSim::takeoff() {
+
+    // call flat trim - calibrate to flat surface
+    ssrv::Empty trim_req;
+    this->trim_cli.call(trim_req);
+
     this->launch_pub.publish(this->empty_msg);
 }
 
@@ -426,7 +427,7 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     // let roscore catch up
     ros::Duration(1.5).sleep();
 
-    tolerance = 0.1;
+    tolerance = 0.5;
 
     // need to initialize the transform from the grid's coordinate system to tum's
 
@@ -436,11 +437,30 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
 
     transformBuilt = false;
 
-    grid_to_tum_scale = tf::Vector3(grid_size_x_in_meters, grid_size_y_in_meters, 1.0);
+    grid_to_world_scale = tf::Vector3(grid_size_x_in_meters, grid_size_y_in_meters, 1.0);
+
+    cur_goal = tf::Vector3(startx, starty, desired_elev_in_meters);
+
+    this->cols = cols;
+    this->rows = rows;
+
+    this->startx = startx;
+    this->starty = starty;
+
+
+    takeoff();
 }
 
 
 bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) {
+
+    cout << "waypoint request: ";
+    cout << req.x << ", " << req.y << endl;
+
+    // ensure valid grid cell
+    if(req.x < 0 || req.y < 0 || req.x >= this->cols|| req.y >= this->rows || req.z > 2) {
+        return false;
+    }
 
     while (! transformBuilt) {
 
@@ -452,33 +472,31 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
 
     }
 
+
     tf::Vector3 newGridPos(req.x, req.y, req.z);
 
-    newGridPos *= grid_to_tum_scale;
+    if (req.z <= 0) {
+        newGridPos.setZ(cur_goal.z());
+    }
 
-//    tf::Transform newGridPos(grid_to_tum.getRotation(), newGridPos + grid_to_tum.getOrigin());
+    cur_goal = tf::Vector3(newGridPos.x(), newGridPos.y(), newGridPos.z());
 
-    tf::Transform newGridTrans(tf::Quaternion::getIdentity(), newGridPos);
-
-    tf::Transform newTumPos = grid_to_tum * newGridTrans;
-    // this is our new goal
-
-    double roll, pitch, yaw;
-    tf::Matrix3x3(newTumPos.getRotation()).getRPY(roll, pitch, yaw);
+    newGridPos *= grid_to_world_scale / ptam_scale;
 
     char msg[256];
-	sprintf(msg, "goto %f %f %f %f\n", newTumPos.getOrigin().x(), newTumPos.getOrigin().y(), newTumPos.getOrigin().z(), yaw);
+	sprintf(msg, "c goto %f %f %f %f\n", newGridPos.x(), newGridPos.y(), newGridPos.z(), 0.0);
+
+    cout << msg << endl;
 
     std_msgs::String outmsg;
     outmsg.data = std::string(msg);
 
     tum_command.publish(outmsg);
 
-    cur_goal = newTumPos.getOrigin();
-
-    while ((cur_goal - cur_tum_pos).length() > tolerance) {
+    while ((cur_goal - cur_pos).length() > tolerance) {
         ros::Duration(0.5).sleep();
 
+        cout <<"(" << cur_goal.x() << ", " << cur_goal.y() << ", " << cur_goal.z() << ") (" << cur_pos.x() << ", " << cur_pos.y() << ", " << cur_pos.z() << ")" << endl;
         if(stopped) {
              return false;
         }
@@ -493,33 +511,89 @@ bool ArdroneThincInReality::PrintNavdataCallback(PrintNavdata::Request &req, Pri
 
 void ArdroneThincInReality::land() {
 
+    std_msgs::String outmsg;
+    outmsg.data = std::string("c clearCommands");
+    tum_command.publish(outmsg);
+
+    ardrone_thinc::Waypoint gohome;
+    gohome.request.x = startx;
+    gohome.request.y = starty;
+    gohome.request.z = -1;
+
+    this->waypoint_cli.call(gohome);
+
+    gohome.request.x = startx;
+    gohome.request.y = starty;
+    gohome.request.z = 0.25;
+
+    this->waypoint_cli.call(gohome);
+
+    this->land_pub.publish(this->empty_msg);
 }
 
 void ArdroneThincInReality::stop() {
-
+    stopped = true;
+    this->land_pub.publish(this->empty_msg);
 }
 
 void ArdroneThincInReality::takeoff() {
+
+    // call flat trim - calibrate to flat surface
+    ssrv::Empty trim_req;
+    this->trim_cli.call(trim_req);
+
+    cout << "Begin takeoff" << endl;
+    std_msgs::String outmsg;
+    outmsg.data = std::string("c autoInit 500 800 4000 0.5");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c setInitialReachDist 0.1");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c setStayWithinDist 0.15");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c setStayTime 1");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c start");
+    tum_command.publish(outmsg);
+
+    cout << "End takeoff" << endl;
 }
 
 
 
 void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr& fs) {
 
-
     if (!transformBuilt) {
         // Is tum ready and are we flying?  If so, pull the x, y, z and yaw out and build the transform
 
-        if (fs->ptamState >= 3 && fs->ptamState <= 5) {
-
-
+        if (fs->ptamState >= 3 && fs->ptamState <= 4) {
             // subtract the starting state scaled properly
             // add the current x and y from tum
             // save the orientation
-            tf::Quaternion q;
-            q.setRPY(0, 0, fs->yaw);
 
-            grid_to_tum = tf::Transform( q, tf::Vector3(fs->x - startx * grid_to_tum_scale.x() , fs->y - starty * grid_to_tum_scale.y(), fs->z - lastElev * grid_to_tum_scale.z()) );
+            ptam_scale = fs->scale;
+
+            cout << "Building Transformation: " << fs->ptamState << endl;
+            char msg[256];
+            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x() / fs->scale, -starty * grid_to_world_scale.y() / fs->scale, 0.0, fs->yaw);
+
+            std_msgs::String outmsg;
+            outmsg.data = std::string(msg);
+
+            cout << msg << endl;
+            tum_command.publish(outmsg);
+
+            tf::Vector3 newGridPos = cur_goal;
+            newGridPos *= grid_to_world_scale / ptam_scale;
+
+            sprintf(msg, "c goto %f %f %f %f", newGridPos.x(), newGridPos.y(), newGridPos.z(), 0.0);
+
+            cout << msg << endl;
+            outmsg.data = std::string(msg);
+            tum_command.publish(outmsg);
 
             transformBuilt = true;
         } else {
@@ -527,8 +601,9 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
         }
     }
 
+    ptam_scale = fs->scale;
 
-    cur_tum_pos = tf::Vector3(fs->x, fs->y, fs->z);
+    cur_pos = ptam_scale * tf::Vector3(fs->x, fs->y, fs->z) / grid_to_world_scale + tf::Vector3(startx, starty, 0);
 
 }
 

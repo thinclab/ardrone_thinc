@@ -414,16 +414,20 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         bool transformBuilt;
 
-        tf::Transform grid_to_tum;
-        tf::Vector3 grid_to_tum_scale;
+        tf::Vector3 grid_to_world_scale;
+        double ptam_scale;
 
 
         tf::Vector3 cur_goal;
-        tf::Vector3 cur_tum_pos;
+        tf::Vector3 cur_pos;
 
         double tolerance;
         double lastElev;
 
+        int cols;
+        int rows;
+
+        std_msgs::Empty empty_msg;
 };
 
 #endif

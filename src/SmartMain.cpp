@@ -28,9 +28,17 @@ using ardrone_autonomy::CamSelect;
 ArdroneThinc * at;
 ros::AsyncSpinner  *spinner;
 
+bool isInterrupting = false;
+
 void mySigintHandler(int sig)
 {
-  at->land();
+    if (isInterrupting) {
+      spinner->stop();
+      exit(1);
+    }
+
+    isInterrupting = true;
+
   at->stop();  //this is needed because these ros dipshits can't correctly handle threads, probably can be removed after they buy a clue
   spinner->stop();
   ros::shutdown();
