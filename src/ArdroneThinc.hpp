@@ -73,7 +73,11 @@ class ArdroneThinc {
 
     public:
 
+        virtual bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) = 0;
+
         virtual void stop() = 0;
+
+        virtual bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) = 0;
 
         /**
          * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
@@ -127,12 +131,11 @@ class ArdroneThincInSim : public ArdroneThinc {
 
         // helper functions
 
-
-        virtual void land();
+        virtual bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
         virtual void stop();
 
-        virtual void takeoff();
+        virtual bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
     private:
 
@@ -202,6 +205,12 @@ class ArdroneThincInSim : public ArdroneThinc {
         * @brief Service client for waypoint service
         */
         ServiceClient waypoint_cli;
+
+        ServiceServer takeoff_srv;
+
+        ServiceClient takeoff_cli;
+
+        ServiceServer land_srv;
 
         /**
         * @brief Service server for printnavdata service
@@ -349,11 +358,11 @@ class ArdroneThincInReality : public ArdroneThinc {
         // helper functions
 
 
-        bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
+        virtual bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
         virtual void stop();
 
-        bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
+        virtual bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
 
 

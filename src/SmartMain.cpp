@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     ros::init(argc, argv, "thinc_main");
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
-    spinner = new ros::AsyncSpinner(2);
+    spinner = new ros::AsyncSpinner(4);
 
     // data container
 

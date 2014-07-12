@@ -94,10 +94,13 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     // services
     this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInSim::WaypointCallback, this);
     this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInSim::PrintNavdataCallback, this);
+    this->takeoff_srv = n.advertiseService("takeoff_thinc_smart", &ArdroneThincInSim::Takeoff, this);
+    this->land_srv = n.advertiseService("land_at_home", &ArdroneThincInSim::LandAtHome, this);
 
     // service clients
     this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
     this->waypoint_cli = n.serviceClient<Waypoint>("waypoint");
+    this->takeoff_cli = n.serviceClient<ssrv::Empty>("takeoff_thinc_smart");
 
     // let roscore catch up
     ros::Duration(1.5).sleep();
@@ -111,24 +114,24 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     this->twist_msg.angular.y = 0;
     this->twist_msg.angular.z = 0;
 
-    takeoff();
-
 }
 
 void ArdroneThincInSim::stop() {
     stopped = true;
 }
 
-void ArdroneThincInSim::takeoff() {
+bool ArdroneThincInSim::Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
 
     // call flat trim - calibrate to flat surface
     ssrv::Empty trim_req;
     this->trim_cli.call(trim_req);
 
     this->launch_pub.publish(this->empty_msg);
+
+    return true;
 }
 
-void ArdroneThincInSim::land() {
+bool ArdroneThincInSim::LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
 
     ardrone_thinc::Waypoint gohome;
     gohome.request.x = startx;
@@ -136,6 +139,8 @@ void ArdroneThincInSim::land() {
 
     this->waypoint_cli.call(gohome);
     this->land_pub.publish(this->empty_msg);
+
+    return true;
 }
 
 /**
@@ -397,11 +402,6 @@ void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 }
 
 
-
-
-
-
-
 ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int starty, double desired_elev_in_meters, double grid_size_x_in_meters, double grid_size_y_in_meters) {
 
     ros::NodeHandle n;
@@ -419,13 +419,13 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     // services
     this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInReality::WaypointCallback, this);
     this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInReality::PrintNavdataCallback, this);
-    this->takeoff_srv = n.advertiseService("takeoff", &ArdroneThincInReality::Takeoff, this);
-    this->land_srv = n.advertiseService("land", &ArdroneThincInReality::LandAtHome, this);
+    this->takeoff_srv = n.advertiseService("takeoff_thinc_smart", &ArdroneThincInReality::Takeoff, this);
+    this->land_srv = n.advertiseService("land_at_home", &ArdroneThincInReality::LandAtHome, this);
 
     // service clients
     this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
     this->waypoint_cli = n.serviceClient<Waypoint>("waypoint");
-    this->takeoff_cli = n.serviceClient<ssrv::Empty>("takeoff");
+    this->takeoff_cli = n.serviceClient<ssrv::Empty>("takeoff_thinc_smart");
 
     // let roscore catch up
     ros::Duration(1.5).sleep();
@@ -451,9 +451,6 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->starty = starty;
 
     this->command_queue_clear = false;
-
-    ssrv::Empty takeoff_req;
-    this->takeoff_cli.call(takeoff_req);
 
 }
 
