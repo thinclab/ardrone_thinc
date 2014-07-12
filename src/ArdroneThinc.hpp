@@ -8,6 +8,7 @@
 // messages
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Empty.h"
+#include "std_msgs/String.h"
 #include "geometry_msgs/Twist.h"
 
 // services
@@ -15,6 +16,7 @@
 #include "ardrone_thinc/Waypoint.h"
 #include "ardrone_thinc/PrintNavdata.h"
 #include "tum_ardrone/filter_state.h"
+#include "std_srvs/Empty.h"
 
 //sockets
 #include <sys/socket.h>
@@ -72,8 +74,6 @@ class ArdroneThinc {
     public:
 
         virtual void stop() = 0;
-        virtual void takeoff() = 0;
-        virtual void land() = 0;
 
         /**
          * Waypoint Callback function. Supplies move function with requested coordinates for drone's movement
@@ -349,17 +349,17 @@ class ArdroneThincInReality : public ArdroneThinc {
         // helper functions
 
 
-        virtual void land();
+        bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
         virtual void stop();
 
-        virtual void takeoff();
+        bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
 
 
         void PoseCallback(const tum_ardrone::filter_stateConstPtr& fs);
 
-        void NavdataCallback(const NavdataConstPtr& nav);
+        void TumCommandCallback(const std_msgs::StringConstPtr& msg);
 
     private:
 
@@ -389,7 +389,6 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         Subscriber tum_pose;
 
-        Subscriber nav_sub;
 
         /**
         * @brief Service client for flattrim service
@@ -406,6 +405,11 @@ class ArdroneThincInReality : public ArdroneThinc {
         */
         ServiceClient waypoint_cli;
 
+        ServiceServer takeoff_srv;
+
+        ServiceClient takeoff_cli;
+
+        ServiceServer land_srv;
 
         /**
         * @brief Service server for printnavdata service
@@ -422,12 +426,17 @@ class ArdroneThincInReality : public ArdroneThinc {
         tf::Vector3 cur_pos;
 
         double tolerance;
-        double lastElev;
 
         int cols;
         int rows;
 
         std_msgs::Empty empty_msg;
+
+        bool command_queue_clear;
+
+        Subscriber tum_pose_sub;
+
+        bool is_flying;
 };
 
 #endif

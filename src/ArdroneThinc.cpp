@@ -414,15 +414,18 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
 
     // subscribers
     this->tum_pose = n.subscribe<tum_ardrone::filter_state>("ardrone/predictedPose", 1, &ArdroneThincInReality::PoseCallback, this);
-    this->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThincInReality::NavdataCallback, this);
+    this->tum_pose_sub = n.subscribe<std_msgs::String>("tum_ardrone/com", 1, &ArdroneThincInReality::TumCommandCallback, this);
 
     // services
     this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInReality::WaypointCallback, this);
     this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInReality::PrintNavdataCallback, this);
+    this->takeoff_srv = n.advertiseService("takeoff", &ArdroneThincInReality::Takeoff, this);
+    this->land_srv = n.advertiseService("land", &ArdroneThincInReality::LandAtHome, this);
 
     // service clients
     this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
     this->waypoint_cli = n.serviceClient<Waypoint>("waypoint");
+    this->takeoff_cli = n.serviceClient<ssrv::Empty>("takeoff");
 
     // let roscore catch up
     ros::Duration(1.5).sleep();
@@ -447,8 +450,11 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->startx = startx;
     this->starty = starty;
 
+    this->command_queue_clear = false;
 
-    takeoff();
+    ssrv::Empty takeoff_req;
+    this->takeoff_cli.call(takeoff_req);
+
 }
 
 
@@ -460,6 +466,11 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
     // ensure valid grid cell
     if(req.x < 0 || req.y < 0 || req.x >= this->cols|| req.y >= this->rows || req.z > 2) {
         return false;
+    }
+
+    if (! is_flying) {
+        ssrv::Empty takeoff_req;
+        this->takeoff_cli.call(takeoff_req);
     }
 
     while (! transformBuilt) {
@@ -493,7 +504,9 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
 
     tum_command.publish(outmsg);
 
-    while ((cur_goal - cur_pos).length() > tolerance) {
+    ros::Duration(1).sleep();
+
+    while (!command_queue_clear) {
         ros::Duration(0.5).sleep();
 
         cout <<"(" << cur_goal.x() << ", " << cur_goal.y() << ", " << cur_goal.z() << ") (" << cur_pos.x() << ", " << cur_pos.y() << ", " << cur_pos.z() << ")" << endl;
@@ -505,11 +518,22 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
     return true;
 }
 
+void ArdroneThincInReality::TumCommandCallback(const std_msgs::StringConstPtr& msg) {
+
+    // look for a status message
+
+    int queue_size;
+    if(sscanf(msg->data.c_str(),"u c Controlling (Queue: %d)", &queue_size)) {
+        this->command_queue_clear = ! queue_size;
+    }
+
+}
+
 bool ArdroneThincInReality::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
     return false;
 }
 
-void ArdroneThincInReality::land() {
+bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
 
     std_msgs::String outmsg;
     outmsg.data = std::string("c clearCommands");
@@ -522,13 +546,30 @@ void ArdroneThincInReality::land() {
 
     this->waypoint_cli.call(gohome);
 
+
+    outmsg.data = std::string("c setInitialReachDist 0.075");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c setStayWithinDist 0.09");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c setStayTime 1");
+    tum_command.publish(outmsg);
+
     gohome.request.x = startx;
     gohome.request.y = starty;
-    gohome.request.z = 0.25;
+    gohome.request.z = 0.33;
 
     this->waypoint_cli.call(gohome);
 
+    outmsg.data = std::string("c stop");
+    tum_command.publish(outmsg);
+
     this->land_pub.publish(this->empty_msg);
+
+    transformBuilt = false;
+
+    return true;
 }
 
 void ArdroneThincInReality::stop() {
@@ -536,7 +577,7 @@ void ArdroneThincInReality::stop() {
     this->land_pub.publish(this->empty_msg);
 }
 
-void ArdroneThincInReality::takeoff() {
+bool ArdroneThincInReality::Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
 
     // call flat trim - calibrate to flat surface
     ssrv::Empty trim_req;
@@ -559,12 +600,31 @@ void ArdroneThincInReality::takeoff() {
     outmsg.data = std::string("c start");
     tum_command.publish(outmsg);
 
+
+    while (! transformBuilt) {
+
+        ros::Duration(0.5).sleep();
+
+        if(stopped) {
+             return false;
+        }
+
+    }
+
     cout << "End takeoff" << endl;
+
+    return true;
 }
 
 
 
 void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr& fs) {
+
+    if (fs->droneState >= 3 && fs->droneState <= 7) {
+        is_flying = true;
+    } else {
+        is_flying = false;
+    }
 
     if (!transformBuilt) {
         // Is tum ready and are we flying?  If so, pull the x, y, z and yaw out and build the transform
@@ -605,9 +665,4 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
 
     cur_pos = ptam_scale * tf::Vector3(fs->x, fs->y, fs->z) / grid_to_world_scale + tf::Vector3(startx, starty, 0);
 
-}
-
-
-void ArdroneThincInReality::NavdataCallback(const NavdataConstPtr& nav) {
-    lastElev = nav->altd / 1000.0;
 }

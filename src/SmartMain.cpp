@@ -2,6 +2,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Empty.h"
+#include "std_msgs/String.h"
 #include "geometry_msgs/Twist.h"
 
 // C++
