@@ -559,12 +559,16 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
 
     this->waypoint_cli.call(gohome);
 
+    outmsg.data = std::string("c land");
+    tum_command.publish(outmsg);
+
     outmsg.data = std::string("c stop");
     tum_command.publish(outmsg);
 
-    this->land_pub.publish(this->empty_msg);
+    outmsg.data = std::string("f reset");
+    tum_command.publish(outmsg);
 
-    transformBuilt = false;
+    this->land_pub.publish(this->empty_msg);
 
     return true;
 }
@@ -582,6 +586,10 @@ bool ArdroneThincInReality::Takeoff(std_srvs::Empty::Request &request, std_srvs:
 
     cout << "Begin takeoff" << endl;
     std_msgs::String outmsg;
+
+    outmsg.data = std::string("c clearCommands");
+    tum_command.publish(outmsg);
+
     outmsg.data = std::string("c autoInit 500 800 4000 0.5");
     tum_command.publish(outmsg);
 
@@ -621,9 +629,10 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
         is_flying = true;
     } else {
         is_flying = false;
+        transformBuilt = false;
     }
 
-    if (!transformBuilt) {
+    if (!transformBuilt && is_flying) {
         // Is tum ready and are we flying?  If so, pull the x, y, z and yaw out and build the transform
 
         if (fs->ptamState >= 3 && fs->ptamState <= 4) {
