@@ -4,23 +4,14 @@ ardrone\_thinc
 Installation
 ------------
 
-ardrone\_thinc:
-
-```bash
-$ cd ~/ros/stacks   # or equivalent
-$ git clone https://github.com/capparell/ardrone_thinc.git
-$ rospack profile && rosstack profile
-$ roscd ardrone_thinc
-$ make
-```
 
 Notes
 -----
 
 * This requires https://github.com/AutonomyLab/ardrone_autonomy
-* For simulation, use https://github.com/capparell/thinc_simulator
+* For simulation, http://lhotse.cs.uga.edu/gitlab/multi-robotics/thinc_simulator
 * If you want to write a program to control drones over UDP sockets, visit 
-  https://github.com/capparell/GaTACDroneControl.
+  http://lhotse.cs.uga.edu/gitlab/multi-robotics/gatacdronecontrol.
 
 Usage
 -----
@@ -28,7 +19,7 @@ Usage
 This package is designed to provide an endpoint for the Georgia Testbed for
 Autonomous Control (GaTAC), and allows grid based motion of ARDrone Parrot
 quadrotors over a UDP socket (or ROS service).  A simulator is available at
-https://github.com/capparell/thinc_simulator.
+http://lhotse.cs.uga.edu/gitlab/multi-robotics/thinc_simulator.
 
 The main ROS node is called `thinc_smart`.  SMART stands for Simulator for the
 Motion of Autonomous Robotic Teams.
@@ -41,8 +32,7 @@ separate `sh` instance (for example, run each in a separate terminal emulator)
 1. Pick an id (hereafter \<id\>) for the drone (with start position
 \<drone-col\>, \<drone-row\>)
 2. `$ roscore` (if it is not already running)
-3. `$ ROS_NAMESPACE=drone<id> rosrun ardrone_thinc thinc_smart <num-cols> <num-rows> <id> <drone-col>
-<drone-row>`
+3. `$ ROS_NAMESPACE=drone<id> rosrun ardrone_thinc thinc_smart <cols> <rows> <drone-col> <drone-row> <size of col in meters> <size of row in meters> <elevation in meters> <if flying simulated drones, last argument is 's', else last argument is 'r'>`
 4. `$ rosrun ardrone_thinc thinc\sock <GaTAC-ip> <GaTAC-port> <id>`
 
 `thinc_smart` doesn't care about whether it's running in the real world or in
