@@ -1,34 +1,47 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+# Catkin User Guide: http://www.ros.org/doc/groovy/api/catkin/html/user_guide/user_guide.html
+# Catkin CMake Standard: http://www.ros.org/doc/groovy/api/catkin/html/user_guide/standards.html
+cmake_minimum_required(VERSION 2.8.3)
+project(ardrone_thinc)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+# Load catkin and all dependencies required for this package
+find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs message_runtime std_msgs tum_ardrone message_generation ardrone_autonomy)
 
-rosbuild_init()
+add_service_files(
+  FILES
+  Waypoint.srv
+  PrintNavdata.srv
+)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+    DEPENDENCIES 
+)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-rosbuild_gensrv()
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+# catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
+catkin_package(
+    DEPENDS  # TODO
+    CATKIN_DEPENDS roscpp sensor_msgs message_runtime std_msgs tum_ardrone message_generation ardrone_autonomy
+    INCLUDE_DIRS # TODO include
+    LIBRARIES # TODO
+)
 
-rosbuild_add_executable(thinc_smart src/SmartMain.cpp src/ArdroneThinc.cpp)
-rosbuild_add_executable(thinc_sock src/SocketMain.cpp)
-rosbuild_add_executable(sock_stub src/SocketStub.cpp)
+include_directories( ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+
+
+add_executable(thinc_smart src/SmartMain.cpp src/ArdroneThinc.cpp)
+target_link_libraries(thinc_smart ${catkin_LIBRARIES})
+add_dependencies(thinc_smart ${catkin_EXPORTED_TARGETS})
+add_dependencies(thinc_smart ${PROJECT_NAME}_generate_messages_cpp)
+
+add_executable(thinc_sock src/SocketMain.cpp)
+target_link_libraries(thinc_sock ${catkin_LIBRARIES})
+add_dependencies(thinc_sock ${catkin_EXPORTED_TARGETS})
+add_dependencies(thinc_sock ${PROJECT_NAME}_generate_messages_cpp)
+
+add_executable(sock_stub src/SocketStub.cpp)
+target_link_libraries(sock_stub ${catkin_LIBRARIES})
+add_dependencies(sock_stub ${catkin_EXPORTED_TARGETS})
+add_dependencies(sock_stub ${PROJECT_NAME}_generate_messages_cpp)
+
+install(PROGRAMS scripts/drone_teleop.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

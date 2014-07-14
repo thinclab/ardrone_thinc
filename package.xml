@@ -1,0 +1,46 @@
+<package>
+  <name>ardrone_thinc</name>
+  <version>1.0.0</version>
+  <description>ardrone_thinc</description>
+  <maintainer email="kbogert@uga.edu">Kenneth Bogert</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://lhotse.cs.uga.edu/gitlab/multi-robotics/ardrone_thinc</url>
+  <!-- <url type="bugtracker"></url> -->
+
+  <author>David Millard</author>
+  <author>Emily Wall</author>
+  <author>Kenneth Bogert</author>
+  <author>Vince Capparell</author>
+  <author>Casey Hetzler</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>message_runtime</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tum_ardrone</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>ardrone_autonomy</build_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>tum_ardrone</run_depend>
+  <run_depend>message_generation</run_depend>
+  <run_depend>ardrone_autonomy</run_depend>
+
+  <!-- Dependencies needed only for running tests. -->
+  <!-- <test_depend>std_msgs</test_depend> -->
+  <!-- <test_depend>ardrone_autonomy</test_depend> -->
+  <!-- <test_depend>sensor_msgs</test_depend> -->
+  <!-- <test_depend>roscpp</test_depend> -->
+  <!-- <test_depend>tum_ardrone</test_depend> -->
+
+</package>
