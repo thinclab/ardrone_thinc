@@ -290,7 +290,7 @@ bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Respo
     cout << req.x << ", " << req.y << endl;
 
     // ensure valid grid cell
-    if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows || req.z > 2) {
+    if(req.x < 0 || req.y < 0 || req.x >= this->columns || req.y >= this->rows || req.z > 4.9) {
         return false;
     }
 
@@ -479,7 +479,7 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
     cout << req.x << ", " << req.y << endl;
 
     // ensure valid grid cell
-    if(req.x < 0 || req.y < 0 || req.x >= this->cols|| req.y >= this->rows || req.z > 2) {
+    if(req.x < 0 || req.y < 0 || req.x >= this->cols|| req.y >= this->rows || req.z > 4.9) {
         return false;
     }
 
