@@ -350,13 +350,12 @@ void ArdroneThincInSim::estimateState(double deltat) {
 void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 
     if (flying == true) {
-        deltat /= 100000; 
+        deltat /= 100000; // This is wrong, but for some reason makes the simulation right GO ROS!!! 
         double distX = goalX - estX;
         double distY = goalY - estY;
         double distZ = goalZ - estZ;
 
         // check if we're within tolerance, if so then hover
-//        double c = 5 * 2 * sqrt( k * ardroneMass );
         double c = 2 * sqrt( k * ardroneMass );
 
         if (distX*distX + distY*distY + distZ*distZ + rotz*rotz < this->tolerance*this->tolerance) {
@@ -409,9 +408,7 @@ void ArdroneThincInSim::springBasedCmdVel(double deltat) {
         this->twist_msg.linear.z = this->vz / 1000 + deltaVz;
         this->twist_msg.angular.x = 0;
         this->twist_msg.angular.y = 0;
-        this->twist_msg.angular.z = this->vtheta  + deltaTheta;
-
-//	cout <<deltat << " : " << this->twist_msg.linear.x << " " << deltaVx << " " << goalX << " " << estX << " " << this->vx << endl;
+        this->twist_msg.angular.z = this->vtheta + deltaTheta;
 
         if (isnan(this->twist_msg.angular.z))
             this->twist_msg.angular.z = 0;
