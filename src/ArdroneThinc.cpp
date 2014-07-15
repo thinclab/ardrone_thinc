@@ -56,7 +56,7 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
 
     k = 15;
     tolerance = 0.3;
-    ardroneMass = 0.5;
+    ardroneMass = 1.48;
     hovering = false;
     flying = false;
 
@@ -66,6 +66,8 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
 
     this->startx = startx;
     this->starty = starty;
+
+    this->lastTimestamp = -1;
 
     getCenterOf(startx, starty, this->estX, this->estY);
 
@@ -126,6 +128,15 @@ bool ArdroneThincInSim::Takeoff(std_srvs::Empty::Request &request, std_srvs::Emp
     ssrv::Empty trim_req;
     this->trim_cli.call(trim_req);
 
+    // takeoff and hover
+    this->twist_msg.linear.x = 0;
+    this->twist_msg.linear.y = 0;
+    this->twist_msg.linear.z = 0;
+    this->twist_msg.angular.x = 0;
+    this->twist_msg.angular.y = 0;
+    this->twist_msg.angular.z = 0;
+    this->twist_pub.publish(this->twist_msg);
+
     this->launch_pub.publish(this->empty_msg);
 
     return true;
@@ -148,6 +159,12 @@ bool ArdroneThincInSim::LandAtHome(std_srvs::Empty::Request &request, std_srvs::
  * @param nav The navdata message returned, with all navdata members available
  */
 void ArdroneThincInSim::NavdataCallback(const NavdataConstPtr& nav) {
+    if (this->lastTimestamp < 0) {
+	this->lastTimestamp = nav->tm;
+	this->rotz = nav->rotZ;
+	return;
+    }
+
     this->rotx = nav->rotX;
     this->roty = nav->rotY;
 //    this->vtheta = (nav->rotZ - this->rotz) / ((nav->tm - this->lastTimestamp) / 1000000.0);
@@ -333,12 +350,13 @@ void ArdroneThincInSim::estimateState(double deltat) {
 void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 
     if (flying == true) {
-        deltat /= 100000; // This is wrong, but for some reason makes the simulation right GO ROS!!!
+        deltat /= 100000; 
         double distX = goalX - estX;
         double distY = goalY - estY;
         double distZ = goalZ - estZ;
 
         // check if we're within tolerance, if so then hover
+//        double c = 5 * 2 * sqrt( k * ardroneMass );
         double c = 2 * sqrt( k * ardroneMass );
 
         if (distX*distX + distY*distY + distZ*distZ + rotz*rotz < this->tolerance*this->tolerance) {
@@ -391,7 +409,10 @@ void ArdroneThincInSim::springBasedCmdVel(double deltat) {
         this->twist_msg.linear.z = this->vz / 1000 + deltaVz;
         this->twist_msg.angular.x = 0;
         this->twist_msg.angular.y = 0;
-        this->twist_msg.angular.z = this->vtheta + deltaTheta;
+        this->twist_msg.angular.z = this->vtheta  + deltaTheta;
+
+//	cout <<deltat << " : " << this->twist_msg.linear.x << " " << deltaVx << " " << goalX << " " << estX << " " << this->vx << endl;
+
         if (isnan(this->twist_msg.angular.z))
             this->twist_msg.angular.z = 0;
 

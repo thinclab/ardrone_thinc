@@ -74,7 +74,7 @@ void mySigintHandler(int sig)
  */
 int main(int argc, char *argv[]) {
     // ros initialization
-    ros::init(argc, argv, "thinc_main");
+    ros::init(argc, argv, "thinc_main", ros::init_options::NoSigintHandler);
     ros::NodeHandle n;
     ros::Rate loop_rate(10);
     spinner = new ros::AsyncSpinner(4);
