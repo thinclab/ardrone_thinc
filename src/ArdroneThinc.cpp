@@ -139,6 +139,23 @@ bool ArdroneThincInSim::Takeoff(std_srvs::Empty::Request &request, std_srvs::Emp
 
     this->launch_pub.publish(this->empty_msg);
 
+    while (! flying ) {
+
+        ros::Duration(0.25).sleep();
+
+        if(stopped) {
+             return false;
+        }
+
+    }
+
+    ardrone_thinc::Waypoint gohome;
+    gohome.request.x = startx;
+    gohome.request.y = starty;
+    gohome.request.z = goalZ;
+
+    this->waypoint_cli.call(gohome);
+
     return true;
 }
 
@@ -147,6 +164,7 @@ bool ArdroneThincInSim::LandAtHome(std_srvs::Empty::Request &request, std_srvs::
     ardrone_thinc::Waypoint gohome;
     gohome.request.x = startx;
     gohome.request.y = starty;
+    gohome.request.z = -1;
 
     this->waypoint_cli.call(gohome);
     this->land_pub.publish(this->empty_msg);
