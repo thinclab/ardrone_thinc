@@ -368,7 +368,7 @@ void ArdroneThincInSim::estimateState(double deltat) {
 void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 
     if (flying == true) {
-        deltat /= 100000; // This is wrong, but for some reason makes the simulation right GO ROS!!! 
+        deltat /= 100000; // This is wrong, but for some reason makes the simulation right GO ROS!!!
         double distX = goalX - estX;
         double distY = goalY - estY;
         double distZ = goalZ - estZ;
@@ -478,6 +478,8 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
 
     grid_to_world_scale = tf::Vector3(grid_size_x_in_meters, grid_size_y_in_meters, 1.0);
 
+    cout << "Init params: " << cols << " " << rows << " " << startx << " " << starty << " " << desired_elev_in_meters << " " << grid_size_x_in_meters << " " << grid_size_y_in_meters << endl;
+
     cur_goal = tf::Vector3(startx, starty, desired_elev_in_meters);
 
     this->cols = cols;
@@ -498,10 +500,12 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
 
     // ensure valid grid cell
     if(req.x < 0 || req.y < 0 || req.x >= this->cols|| req.y >= this->rows || req.z > 4.9) {
+        cout << "Invalid Request: " << req.x << ", " << req.y << ", " << req.z << endl;
         return false;
     }
 
     if (! is_flying) {
+        cout << "Not yet flying, taking off " << endl;
         ssrv::Empty takeoff_req;
         this->takeoff_cli.call(takeoff_req);
     }
@@ -601,8 +605,8 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
     outmsg.data = std::string("c stop");
     tum_command.publish(outmsg);
 
-    outmsg.data = std::string("f reset");
-    tum_command.publish(outmsg);
+//    outmsg.data = std::string("f reset");
+//    tum_command.publish(outmsg);
 
     this->land_pub.publish(this->empty_msg);
 
