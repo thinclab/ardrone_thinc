@@ -141,7 +141,7 @@ class ArdroneThincInSim : public ArdroneThinc {
 
         // these are the variables used to estimate the drone's position
         double estX, estY, estZ; // in meters
-        double aX, aY; // in meters a second second
+        double aX, aY, aZ; // in meters a second second
         double lastTimestamp; // in microseconds !
 
         double goalX, goalY, goalZ; // in meters

@@ -198,6 +198,7 @@ void ArdroneThincInSim::NavdataCallback(const NavdataConstPtr& nav) {
     this->vz = nav->vz;
     this->aX = nav->ax;
     this->aY = nav->ay;
+    this->aZ = nav->az;
     this->tags_count = nav->tags_count;
     this->tags_type = nav->tags_type;
     this->flying = (nav->state >= 3 && nav->state <= 5) || nav->state == 7;
@@ -360,7 +361,8 @@ void ArdroneThincInSim::estimateState(double deltat) {
     deltat /= 1000000;
     this->estX += this->vx / 1000 * deltat + 0.5 * this->aX * 9.8 * deltat * deltat;
     this->estY += this->vy / 1000 * deltat + 0.5 * this->aY * 9.8 * deltat * deltat;
-    this->estZ = this->sonar / 1000;
+    this->estZ += this->vz / 1000 * deltat + 0.5 * (this->aZ -1) * 9.8 * deltat * deltat;
+//    this->estZ = this->sonar / 1000;
 
 }
 
@@ -397,7 +399,7 @@ void ArdroneThincInSim::springBasedCmdVel(double deltat) {
         double springForceY = k * distY;
         double dampingForceY = -c * this->vy / 10000;
         double springForceZ = k * distZ;
-        double dampingForceZ = -c * this->vz / 1000;
+        double dampingForceZ = -c * this->vz / 10000;
 
         double totalForceX = springForceX + dampingForceX;
         double totalForceY = springForceY + dampingForceY;
@@ -423,7 +425,7 @@ void ArdroneThincInSim::springBasedCmdVel(double deltat) {
 
         this->twist_msg.linear.x = this->vx / 10000 + deltaVx;
         this->twist_msg.linear.y = this->vy / 10000 + deltaVy;
-        this->twist_msg.linear.z = this->vz / 1000 + deltaVz;
+        this->twist_msg.linear.z = this->vz / 10000 + deltaVz;
         this->twist_msg.angular.x = 0;
         this->twist_msg.angular.y = 0;
         this->twist_msg.angular.z = this->vtheta + deltaTheta;
