@@ -255,45 +255,16 @@ bool ArdroneThincInSim::PrintNavdataCallback(PrintNavdata::Request &req, PrintNa
     string tagsCountString = ss5.str();
     this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;
 
-    if(this->id == 0)
-    {
-    ofstream file ("currentNavdata0.txt");
-    if (file.is_open())
-    {
+    stringstream file;
+
     file << this->batteryCurrent <<"\n";
     file << this->forwardVelocityCurrent <<"\n";
     file << this->sidewaysVelocityCurrent <<"\n";
     file << this->verticalVelocityCurrent <<"\n";
     file << this->sonarCurrent <<"\n";
     file << this->tagsCountCurrent <<"\n";
-    }
-    }
-    else if(this->id == 1)
-    {
-    ofstream file ("currentNavdata1.txt");
-    if (file.is_open())
-    {
-    file << this->batteryCurrent <<"\n";
-    file << this->forwardVelocityCurrent <<"\n";
-    file << this->sidewaysVelocityCurrent <<"\n";
-    file << this->verticalVelocityCurrent <<"\n";
-    file << this->sonarCurrent <<"\n";
-    file << this->tagsCountCurrent <<"\n";
-    }
-    }
-    else if(this->id == 2)
-    {
-    ofstream file ("currentNavdata2.txt");
-    if (file.is_open())
-    {
-    file << this->batteryCurrent <<"\n";
-    file << this->forwardVelocityCurrent <<"\n";
-    file << this->sidewaysVelocityCurrent <<"\n";
-    file << this->verticalVelocityCurrent <<"\n";
-    file << this->sonarCurrent <<"\n";
-    file << this->tagsCountCurrent <<"\n";
-    }
-    }
+
+    res.str = file.str();
 
 return true;
 }
