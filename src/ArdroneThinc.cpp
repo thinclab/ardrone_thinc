@@ -502,7 +502,7 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
 
     cur_goal = tf::Vector3(newGridPos.x(), newGridPos.y(), newGridPos.z());
 
-    newGridPos *= grid_to_world_scale / ptam_scale;
+    newGridPos *= grid_to_world_scale;
 
     char msg[256];
 	sprintf(msg, "c goto %f %f %f %f\n", newGridPos.x(), newGridPos.y(), newGridPos.z(), 0.0);
