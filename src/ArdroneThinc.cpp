@@ -98,6 +98,7 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInSim::PrintNavdataCallback, this);
     this->takeoff_srv = n.advertiseService("takeoff_thinc_smart", &ArdroneThincInSim::Takeoff, this);
     this->land_srv = n.advertiseService("land_at_home", &ArdroneThincInSim::LandAtHome, this);
+    this->land_here_srv = n.advertiseService("land_here", &ArdroneThincInSim::LandHere, this);
 
     // service clients
     this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
@@ -172,6 +173,12 @@ bool ArdroneThincInSim::LandAtHome(std_srvs::Empty::Request &request, std_srvs::
     return true;
 }
 
+bool ArdroneThincInSim::LandHere(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
+
+    this->land_pub.publish(this->empty_msg);
+
+    return true;
+}
 /**
  * Navdata Callback function. Sets drone's data members to values in navdata message
  * @param nav The navdata message returned, with all navdata members available
@@ -430,6 +437,7 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInReality::PrintNavdataCallback, this);
     this->takeoff_srv = n.advertiseService("takeoff_thinc_smart", &ArdroneThincInReality::Takeoff, this);
     this->land_srv = n.advertiseService("land_at_home", &ArdroneThincInReality::LandAtHome, this);
+    this->land_here_srv = n.advertiseService("land_here", &ArdroneThincInReality::LandHere, this);
 
     // service clients
     this->trim_cli = n.serviceClient<ssrv::Empty>("ardrone/flattrim");
@@ -450,6 +458,9 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     transformBuilt = false;
 
     grid_to_world_scale = tf::Vector3(grid_size_x_in_meters, grid_size_y_in_meters, 1.0);
+
+
+    ptam_scale = 1.0;
 
     cout << "Init params: " << cols << " " << rows << " " << startx << " " << starty << " " << desired_elev_in_meters << " " << grid_size_x_in_meters << " " << grid_size_y_in_meters << endl;
 
@@ -502,7 +513,9 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
 
     cur_goal = tf::Vector3(newGridPos.x(), newGridPos.y(), newGridPos.z());
 
+    double savedZ = newGridPos.z();
     newGridPos *= grid_to_world_scale;
+    newGridPos.setZ(savedZ);
 
     char msg[256];
 	sprintf(msg, "c goto %f %f %f %f\n", newGridPos.x(), newGridPos.y(), newGridPos.z(), 0.0);
@@ -513,6 +526,8 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
     outmsg.data = std::string(msg);
 
     tum_command.publish(outmsg);
+
+    command_queue_clear = false;
 
     ros::Duration(1).sleep();
 
@@ -533,9 +548,16 @@ void ArdroneThincInReality::TumCommandCallback(const std_msgs::StringConstPtr& m
     // look for a status message
 
     int queue_size;
-    if(sscanf(msg->data.c_str(),"u c Controlling (Queue: %d)", &queue_size)) {
-        this->command_queue_clear = ! queue_size;
+    char cmd[2048];
+    if(sscanf(msg->data.c_str(),"u c Controlling (Queue: %d) Current: %s:", &queue_size, cmd)) {
+
+	if (queue_size == 0 && strncmp(cmd, "NULL", 4) == 0) {
+		this->command_queue_clear = true;
+		return;
+	}
+
     }
+    this->command_queue_clear = false;
 
 }
 
@@ -556,7 +578,7 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
 
     this->waypoint_cli.call(gohome);
 
-
+/*
     outmsg.data = std::string("c setInitialReachDist 0.075");
     tum_command.publish(outmsg);
 
@@ -565,9 +587,9 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
 
     outmsg.data = std::string("c setStayTime 1");
     tum_command.publish(outmsg);
-
-    gohome.request.x = startx;
-    gohome.request.y = starty;
+*/
+    gohome.request.x = startx  * grid_to_world_scale.x();
+    gohome.request.y = starty  * grid_to_world_scale.y();
     gohome.request.z = 0.33;
 
     this->waypoint_cli.call(gohome);
@@ -580,6 +602,26 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
 
 //    outmsg.data = std::string("f reset");
 //    tum_command.publish(outmsg);
+
+    this->land_pub.publish(this->empty_msg);
+
+    return true;
+}
+
+
+bool ArdroneThincInReality::LandHere(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
+
+
+    std_msgs::String outmsg;
+    outmsg.data = std::string("c clearCommands");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c land");
+    tum_command.publish(outmsg);
+
+    outmsg.data = std::string("c stop");
+    tum_command.publish(outmsg);
+
 
     this->land_pub.publish(this->empty_msg);
 
@@ -603,16 +645,7 @@ bool ArdroneThincInReality::Takeoff(std_srvs::Empty::Request &request, std_srvs:
     outmsg.data = std::string("c clearCommands");
     tum_command.publish(outmsg);
 
-    outmsg.data = std::string("c autoInit 500 800 4000 0.5");
-    tum_command.publish(outmsg);
-
-    outmsg.data = std::string("c setInitialReachDist 0.1");
-    tum_command.publish(outmsg);
-
-    outmsg.data = std::string("c setStayWithinDist 0.15");
-    tum_command.publish(outmsg);
-
-    outmsg.data = std::string("c setStayTime 1");
+    outmsg.data = std::string("c takeoff");
     tum_command.publish(outmsg);
 
     outmsg.data = std::string("c start");
@@ -653,11 +686,11 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
             // add the current x and y from tum
             // save the orientation
 
-            ptam_scale = fs->scale;
+            ptam_scale = sqrt(sqrt((double)(fs->scale)));
 
             cout << "Building Transformation: " << fs->ptamState << endl;
             char msg[256];
-            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x() / fs->scale, -starty * grid_to_world_scale.y() / fs->scale, 0.0, fs->yaw);
+            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x(), -starty * grid_to_world_scale.y(), 0.0, 0.0);
 
             std_msgs::String outmsg;
             outmsg.data = std::string(msg);
@@ -665,8 +698,22 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
             cout << msg << endl;
             tum_command.publish(outmsg);
 
+
+/*            outmsg.data = std::string("c setInitialReachDist 0.2");
+            tum_command.publish(outmsg);
+
+            outmsg.data = std::string("c setStayWithinDist 0.3");
+            tum_command.publish(outmsg);
+
+            outmsg.data = std::string("c setStayTime 1");
+            tum_command.publish(outmsg);
+
+            outmsg.data = std::string("c lockScaleFP");
+            tum_command.publish(outmsg);
+*/
+
             tf::Vector3 newGridPos = cur_goal;
-            newGridPos *= grid_to_world_scale / ptam_scale;
+            newGridPos *= grid_to_world_scale;
 
             sprintf(msg, "c goto %f %f %f %f", newGridPos.x(), newGridPos.y(), newGridPos.z(), 0.0);
 
@@ -680,8 +727,8 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
         }
     }
 
-    ptam_scale = fs->scale;
+    ptam_scale = sqrt(sqrt((double)(fs->scale)));
 
-    cur_pos = ptam_scale * tf::Vector3(fs->x, fs->y, fs->z) / grid_to_world_scale + tf::Vector3(startx, starty, 0);
+    cur_pos = tf::Vector3(fs->x, fs->y, fs->z) / grid_to_world_scale + tf::Vector3(startx, starty, 0);
 
 }

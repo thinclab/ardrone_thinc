@@ -75,6 +75,8 @@ class ArdroneThinc {
 
         virtual bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) = 0;
 
+        virtual bool LandHere(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) = 0;
+
         virtual void stop() = 0;
 
         virtual bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) = 0;
@@ -132,6 +134,8 @@ class ArdroneThincInSim : public ArdroneThinc {
         // helper functions
 
         virtual bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
+
+        virtual bool LandHere(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
         virtual void stop();
 
@@ -211,6 +215,8 @@ class ArdroneThincInSim : public ArdroneThinc {
         ServiceClient takeoff_cli;
 
         ServiceServer land_srv;
+
+        ServiceServer land_here_srv;
 
         /**
         * @brief Service server for printnavdata service
@@ -360,6 +366,8 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         virtual bool LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
 
+        virtual bool LandHere(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
+
         virtual void stop();
 
         virtual bool Takeoff(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response);
@@ -419,6 +427,9 @@ class ArdroneThincInReality : public ArdroneThinc {
         ServiceClient takeoff_cli;
 
         ServiceServer land_srv;
+
+        ServiceServer land_here_srv;
+
 
         /**
         * @brief Service server for printnavdata service
