@@ -473,6 +473,7 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->starty = starty;
 
     this->command_queue_clear = false;
+    stopped = false;
 
 }
 
@@ -692,7 +693,7 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
 
             cout << "Building Transformation: " << fs->ptamState << endl;
             char msg[256];
-            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x(), -starty * grid_to_world_scale.y(), 0.0, rot);
+            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x(), -starty * grid_to_world_scale.y(), -fs->z, rot);
 
             std_msgs::String outmsg;
             outmsg.data = std::string(msg);
@@ -730,7 +731,9 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
     }
 
     ptam_scale = sqrt(sqrt((double)(fs->scale)));
+    double savedZ = fs->z;
 
     cur_pos = tf::Vector3(fs->x, fs->y, fs->z) / grid_to_world_scale + tf::Vector3(startx, starty, 0);
 
+    cur_pos.setZ(savedZ);
 }
