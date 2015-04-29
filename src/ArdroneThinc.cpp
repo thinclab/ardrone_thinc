@@ -688,9 +688,11 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
 
             ptam_scale = sqrt(sqrt((double)(fs->scale)));
 
+            double rot = round(fs->yaw / 90.0) * 90;
+
             cout << "Building Transformation: " << fs->ptamState << endl;
             char msg[256];
-            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x(), -starty * grid_to_world_scale.y(), 0.0, 0.0);
+            sprintf(msg, "c setReference %f %f %f %f", -startx * grid_to_world_scale.x(), -starty * grid_to_world_scale.y(), 0.0, rot);
 
             std_msgs::String outmsg;
             outmsg.data = std::string(msg);
