@@ -474,6 +474,7 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
 
     this->command_queue_clear = false;
     stopped = false;
+    has_takenoff = false;
 
 }
 
@@ -489,7 +490,7 @@ bool ArdroneThincInReality::WaypointCallback(Waypoint::Request &req, Waypoint::R
         return false;
     }
 
-    if (! is_flying) {
+    if (! is_flying && !has_takenoff) {
         cout << "Not yet flying, taking off " << endl;
         ssrv::Empty takeoff_req;
         this->takeoff_cli.call(takeoff_req);
@@ -606,6 +607,8 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
 
     this->land_pub.publish(this->empty_msg);
 
+    has_takenoff = false;
+
     return true;
 }
 
@@ -625,6 +628,8 @@ bool ArdroneThincInReality::LandHere(std_srvs::Empty::Request &request, std_srvs
 
 
     this->land_pub.publish(this->empty_msg);
+
+    has_takenoff = false;
 
     return true;
 }
@@ -664,6 +669,8 @@ bool ArdroneThincInReality::Takeoff(std_srvs::Empty::Request &request, std_srvs:
     }
 
     cout << "End takeoff" << endl;
+
+    has_takenoff = true;
 
     return true;
 }

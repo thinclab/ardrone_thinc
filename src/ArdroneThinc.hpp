@@ -457,6 +457,7 @@ class ArdroneThincInReality : public ArdroneThinc {
         Subscriber tum_pose_sub;
 
         bool is_flying;
+        bool has_takenoff;
 };
 
 #endif
