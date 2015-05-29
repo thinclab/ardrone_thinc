@@ -8,6 +8,7 @@
 #include "ardrone_autonomy/Navdata.h"
 #include "std_srvs/Empty.h"
 #include "std_msgs/String.h"
+#include "ardrone_thinc/pose.h"
 
 // ardrone_thinc
 #include "ArdroneThinc.hpp"
@@ -89,13 +90,13 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     this->land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
     this->reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
     this->twist_pub = n.advertise<Twist>("cmd_vel", 10);
+    this->pose_pub = n.advertise<ardrone_thinc::pose>("gatac_pose", 1);
 
     // subscribers
     this->nav_sub = n.subscribe<Navdata>("ardrone/navdata", 1, &ArdroneThincInSim::NavdataCallback, this);
 
     // services
     this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInSim::WaypointCallback, this);
-    this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInSim::PrintNavdataCallback, this);
     this->takeoff_srv = n.advertiseService("takeoff_thinc_smart", &ArdroneThincInSim::Takeoff, this);
     this->land_srv = n.advertiseService("land_at_home", &ArdroneThincInSim::LandAtHome, this);
     this->land_here_srv = n.advertiseService("land_here", &ArdroneThincInSim::LandHere, this);
@@ -116,6 +117,10 @@ ArdroneThincInSim::ArdroneThincInSim(int cols, int rows, int startx, int starty,
     this->twist_msg.angular.x = 0;
     this->twist_msg.angular.y = 0;
     this->twist_msg.angular.z = 0;
+
+    lastPositionPublish = ros::Time::now();
+    lastPublishX = startx;
+    lastPublishY = starty;
 
 }
 
@@ -215,65 +220,32 @@ void ArdroneThincInSim::NavdataCallback(const NavdataConstPtr& nav) {
 
     this->lastTimestamp = nav->tm;
 
+
+    PublishPosition();
 }
 
-/**
- * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
- * @param &req PrintNavdata request, an empty message
- * @param &res PrintNavdata response, an empty message
- * @return Boolean denoting whether the call was successful
- */
-bool ArdroneThincInSim::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
-	cout<< "Navdata print request"<< endl;
 
-    float batteryConvert = this->batteryPercent;
-    stringstream ss0 (stringstream::in | stringstream::out);
-    ss0 << batteryConvert;
-    string batteryString = ss0.str();
-    this->batteryCurrent = "Battery percent: " + batteryString;
+void ArdroneThincInSim::PublishPosition() {
 
-    float forVelocConvert = this->vy;
-   stringstream ss1 (stringstream::in | stringstream::out);
-    ss1 << forVelocConvert;
-    string forVelocString = ss1.str();
-    this->forwardVelocityCurrent = "Forward velocity: " + forVelocString;
+	int x, y;
+	getStateFor(estX, estY, x, y);
 
-    float sideVelocConvert = this->vx;
-    stringstream ss2 (stringstream::in | stringstream::out);
-    ss2 << sideVelocConvert;
-    string sideVelocString = ss2.str();
-    this->sidewaysVelocityCurrent = "Sideways velocity: " + sideVelocString;
+    // should we publish now?
 
-    float vertVelocConvert = this->vz;
-    stringstream ss3 (stringstream::in | stringstream::out);
-    ss3 << vertVelocConvert;
-    string vertVelocString = ss3.str();
-    this->verticalVelocityCurrent  = "Vertical velocity: " + vertVelocString;
+    if ( (ros::Time::now() - lastPositionPublish).toSec() > 1.0/2.0 ||
+        x != lastPublishX || y != lastPublishY) {
 
-    int sonarConvert = this->sonar;
-  stringstream ss4 (stringstream::in | stringstream::out);
-    ss4 << sonarConvert;
-    string sonarString = ss4.str();
-    this->sonarCurrent  = "Sonar reading: " + sonarString;
+        ardrone_thinc::pose out_msg;
+        out_msg.x = x;
+        out_msg.y = y;
+        out_msg.z = estZ;
 
-    int tagsCountConvert = this->tags_count;
-  stringstream ss5 (stringstream::in | stringstream::out);
-    ss5 << tagsCountConvert;
-    string tagsCountString = ss5.str();
-    this->tagsCountCurrent= "Tags spotted, count: " + tagsCountString;
+        pose_pub.publish(out_msg);
 
-    stringstream file;
-
-    file << this->batteryCurrent <<"\n";
-    file << this->forwardVelocityCurrent <<"\n";
-    file << this->sidewaysVelocityCurrent <<"\n";
-    file << this->verticalVelocityCurrent <<"\n";
-    file << this->sonarCurrent <<"\n";
-    file << this->tagsCountCurrent <<"\n";
-
-    res.str = file.str();
-
-return true;
+        lastPositionPublish = ros::Time::now();
+        lastPublishX = x;
+        lastPublishY = y;
+    }
 }
 
 /**
@@ -316,8 +288,8 @@ bool ArdroneThincInSim::WaypointCallback(Waypoint::Request &req, Waypoint::Respo
 }
 
 void ArdroneThincInSim::getStateFor(double x, double y, int & X, int & Y) {
-    X = (int)(y / y_scale);
-    Y = (int)(x / x_scale);
+    X = (int)round(y / x_scale - 0.5);
+    Y = (int)round(x / y_scale - 0.5);
 }
 
 void ArdroneThincInSim::getCenterOf(int X, int Y, double & x, double & y) {
@@ -427,6 +399,7 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
     this->reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
     this->tum_command = n.advertise<std_msgs::String>("tum_ardrone/com", 5);
+    this->pose_pub = n.advertise<ardrone_thinc::pose>("gatac_pose", 1);
 
     // subscribers
     this->tum_pose = n.subscribe<tum_ardrone::filter_state>("ardrone/predictedPose", 1, &ArdroneThincInReality::PoseCallback, this);
@@ -434,7 +407,6 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
 
     // services
     this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInReality::WaypointCallback, this);
-    this->printnavdata_srv = n.advertiseService("printnavdata", &ArdroneThincInReality::PrintNavdataCallback, this);
     this->takeoff_srv = n.advertiseService("takeoff_thinc_smart", &ArdroneThincInReality::Takeoff, this);
     this->land_srv = n.advertiseService("land_at_home", &ArdroneThincInReality::LandAtHome, this);
     this->land_here_srv = n.advertiseService("land_here", &ArdroneThincInReality::LandHere, this);
@@ -475,6 +447,10 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->command_queue_clear = false;
     stopped = false;
     has_takenoff = false;
+
+    lastPositionPublish = ros::Time::now();
+    lastPublishX = startx;
+    lastPublishY = starty;
 
 }
 
@@ -563,8 +539,24 @@ void ArdroneThincInReality::TumCommandCallback(const std_msgs::StringConstPtr& m
 
 }
 
-bool ArdroneThincInReality::PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) {
-    return false;
+void ArdroneThincInReality::PublishPosition() {
+
+    if ( (ros::Time::now() - lastPositionPublish).toSec() > 1.0/2.0 ||
+        (int)round(cur_pos.x()) != lastPublishX || (int)round(cur_pos.y()) != lastPublishY) {
+
+        ardrone_thinc::pose out_msg;
+        out_msg.x = (int)round(cur_pos.x());
+        out_msg.y = (int)round(cur_pos.y());
+        out_msg.z = cur_pos.z();
+
+        pose_pub.publish(out_msg);
+
+        lastPositionPublish = ros::Time::now();
+        lastPublishX = (int)round(cur_pos.x());
+        lastPublishY = (int)round(cur_pos.y());
+    }
+
+
 }
 
 bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_srvs::Empty::Response &response) {
@@ -590,8 +582,8 @@ bool ArdroneThincInReality::LandAtHome(std_srvs::Empty::Request &request, std_sr
     outmsg.data = std::string("c setStayTime 1");
     tum_command.publish(outmsg);
 */
-    gohome.request.x = startx  * grid_to_world_scale.x();
-    gohome.request.y = starty  * grid_to_world_scale.y();
+    gohome.request.x = startx;
+    gohome.request.y = starty;
     gohome.request.z = 0.33;
 
     this->waypoint_cli.call(gohome);
@@ -743,4 +735,6 @@ void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr
     cur_pos = tf::Vector3(fs->x, fs->y, fs->z) / grid_to_world_scale + tf::Vector3(startx, starty, 0);
 
     cur_pos.setZ(savedZ);
+
+    PublishPosition();
 }

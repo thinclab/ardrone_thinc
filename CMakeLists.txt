@@ -9,14 +9,16 @@ find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs message_runtime std_m
 add_service_files(
   FILES
   Waypoint.srv
-  PrintNavdata.srv
 )
+
+add_message_files(FILES pose.msg)
+
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
     DEPENDENCIES 
+    std_msgs
 )
-
 
 # catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
 catkin_package(

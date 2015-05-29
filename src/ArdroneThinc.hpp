@@ -89,13 +89,7 @@ class ArdroneThinc {
          */
         virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res) = 0;
 
-        /**
-         * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
-         * @param &req PrintNavdata request, an empty message
-         * @param &res PrintNavdata response, an empty message
-         * @return Boolean denoting whether the call was successful
-         */
-        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res) = 0;
+        virtual void PublishPosition() = 0;
 
 
 };
@@ -123,13 +117,7 @@ class ArdroneThincInSim : public ArdroneThinc {
          */
         virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
 
-        /**
-         * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
-         * @param &req PrintNavdata request, an empty message
-         * @param &res PrintNavdata response, an empty message
-         * @return Boolean denoting whether the call was successful
-         */
-        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+        virtual void PublishPosition();
 
         // helper functions
 
@@ -157,6 +145,8 @@ class ArdroneThincInSim : public ArdroneThinc {
 
         double vtheta;
 
+        ros::Time lastPositionPublish;
+        int lastPublishX, lastPublishY;
 
         void estimateState(double deltat);
         void springBasedCmdVel(double deltat);
@@ -191,6 +181,11 @@ class ArdroneThincInSim : public ArdroneThinc {
         Publisher twist_pub;
 
         /**
+        * @brief Publisher for position topic
+        */
+        Publisher pose_pub;
+
+        /**
         * @brief Subscriber for navdata topic, uses navdata topic
         */
         Subscriber nav_sub;
@@ -217,11 +212,6 @@ class ArdroneThincInSim : public ArdroneThinc {
         ServiceServer land_srv;
 
         ServiceServer land_here_srv;
-
-        /**
-        * @brief Service server for printnavdata service
-        */
-        ServiceServer printnavdata_srv;
 
         /**
         * @brief Empty message, reused for communication between ArdroneThinc and SmartMain
@@ -353,13 +343,7 @@ class ArdroneThincInReality : public ArdroneThinc {
          */
         virtual bool WaypointCallback(Waypoint::Request &req, Waypoint::Response &res);
 
-        /**
-         * PrintNavdata Callback function. Prints all relevant drone data members to drone-specific text file, for reading/requesting by GaTAC server/client
-         * @param &req PrintNavdata request, an empty message
-         * @param &res PrintNavdata response, an empty message
-         * @return Boolean denoting whether the call was successful
-         */
-        virtual bool PrintNavdataCallback(PrintNavdata::Request &req, PrintNavdata::Response &res);
+        virtual void PublishPosition();
 
         // helper functions
 
@@ -404,6 +388,11 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         Publisher tum_command;
 
+        /**
+        * @brief Publisher for position topic
+        */
+        Publisher pose_pub;
+
         Subscriber tum_pose;
 
 
@@ -431,11 +420,6 @@ class ArdroneThincInReality : public ArdroneThinc {
         ServiceServer land_here_srv;
 
 
-        /**
-        * @brief Service server for printnavdata service
-        */
-        ServiceServer printnavdata_srv;
-
         bool transformBuilt;
 
         tf::Vector3 grid_to_world_scale;
@@ -458,6 +442,9 @@ class ArdroneThincInReality : public ArdroneThinc {
 
         bool is_flying;
         bool has_takenoff;
+
+        ros::Time lastPositionPublish;
+        int lastPublishX, lastPublishY;
 };
 
 #endif
