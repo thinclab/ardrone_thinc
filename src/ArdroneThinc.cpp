@@ -30,7 +30,6 @@ using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_autonomy::Navdata;
 using ardrone_thinc::Waypoint;
-using ardrone_thinc::PrintNavdata;
 
 /**
  * @file	ArdroneThinc.cpp

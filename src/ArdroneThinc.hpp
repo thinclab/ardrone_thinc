@@ -14,7 +14,6 @@
 // services
 #include "ardrone_autonomy/Navdata.h"
 #include "ardrone_thinc/Waypoint.h"
-#include "ardrone_thinc/PrintNavdata.h"
 #include "tum_ardrone/filter_state.h"
 #include "std_srvs/Empty.h"
 
@@ -38,7 +37,6 @@ using geometry_msgs::Twist;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
-using ardrone_thinc::PrintNavdata;
 using tum_ardrone::filter_state;
 
 /**
