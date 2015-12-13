@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ardrone_thinc)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs message_runtime std_msgs tum_ardrone message_generation ardrone_autonomy)
+find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs message_runtime std_msgs uga_tum_ardrone message_generation ardrone_autonomy)
 
 add_service_files(
   FILES
@@ -23,7 +23,7 @@ generate_messages(
 # catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
 catkin_package(
     DEPENDS  # TODO
-    CATKIN_DEPENDS roscpp sensor_msgs message_runtime std_msgs tum_ardrone message_generation ardrone_autonomy
+    CATKIN_DEPENDS roscpp sensor_msgs message_runtime std_msgs uga_tum_ardrone message_generation ardrone_autonomy
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
 )

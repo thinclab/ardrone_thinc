@@ -14,7 +14,7 @@
 // services
 #include "ardrone_autonomy/Navdata.h"
 #include "ardrone_thinc/Waypoint.h"
-#include "tum_ardrone/filter_state.h"
+#include "uga_tum_ardrone/filter_state.h"
 #include "std_srvs/Empty.h"
 
 //sockets
@@ -37,7 +37,7 @@ using geometry_msgs::Twist;
 using sensor_msgs::ImageConstPtr;
 using ardrone_autonomy::NavdataConstPtr;
 using ardrone_thinc::Waypoint;
-using tum_ardrone::filter_state;
+using uga_tum_ardrone::filter_state;
 
 /**
  * Enumerated movement directions
@@ -356,7 +356,7 @@ class ArdroneThincInReality : public ArdroneThinc {
 
 
 
-        void PoseCallback(const tum_ardrone::filter_stateConstPtr& fs);
+        void PoseCallback(const uga_tum_ardrone::filter_stateConstPtr& fs);
 
         void TumCommandCallback(const std_msgs::StringConstPtr& msg);
 

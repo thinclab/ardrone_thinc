@@ -397,12 +397,12 @@ ArdroneThincInReality::ArdroneThincInReality(int cols, int rows, int startx, int
     this->launch_pub = n.advertise<smsg::Empty>("ardrone/takeoff", 5);
     this->land_pub = n.advertise<smsg::Empty>("ardrone/land", 5);
     this->reset_pub = n.advertise<smsg::Empty>("ardrone/reset", 5);
-    this->tum_command = n.advertise<std_msgs::String>("tum_ardrone/com", 5);
+    this->tum_command = n.advertise<std_msgs::String>("uga_tum_ardrone/com", 5);
     this->pose_pub = n.advertise<ardrone_thinc::pose>("gatac_pose", 1);
 
     // subscribers
-    this->tum_pose = n.subscribe<tum_ardrone::filter_state>("ardrone/predictedPose", 1, &ArdroneThincInReality::PoseCallback, this);
-    this->tum_pose_sub = n.subscribe<std_msgs::String>("tum_ardrone/com", 1, &ArdroneThincInReality::TumCommandCallback, this);
+    this->tum_pose = n.subscribe<uga_tum_ardrone::filter_state>("ardrone/predictedPose", 1, &ArdroneThincInReality::PoseCallback, this);
+    this->tum_pose_sub = n.subscribe<std_msgs::String>("uga_tum_ardrone/com", 1, &ArdroneThincInReality::TumCommandCallback, this);
 
     // services
     this->waypoint_srv = n.advertiseService("waypoint", &ArdroneThincInReality::WaypointCallback, this);
@@ -668,7 +668,7 @@ bool ArdroneThincInReality::Takeoff(std_srvs::Empty::Request &request, std_srvs:
 
 
 
-void ArdroneThincInReality::PoseCallback(const tum_ardrone::filter_stateConstPtr& fs) {
+void ArdroneThincInReality::PoseCallback(const uga_tum_ardrone::filter_stateConstPtr& fs) {
 
     if (fs->droneState >= 3 && fs->droneState <= 7) {
         is_flying = true;

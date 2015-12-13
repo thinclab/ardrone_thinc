@@ -23,7 +23,7 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>message_runtime</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>tum_ardrone</build_depend>
+  <build_depend>uga_tum_ardrone</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>ardrone_autonomy</build_depend>
 
@@ -32,7 +32,7 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>sensor_msgs</run_depend>
-  <run_depend>tum_ardrone</run_depend>
+  <run_depend>uga_tum_ardrone</run_depend>
   <run_depend>message_generation</run_depend>
   <run_depend>ardrone_autonomy</run_depend>
 

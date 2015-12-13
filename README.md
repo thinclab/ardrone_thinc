@@ -9,9 +9,9 @@ Notes
 -----
 
 * This requires https://github.com/AutonomyLab/ardrone_autonomy
-* For simulation, http://lhotse.cs.uga.edu/gitlab/multi-robotics/thinc_simulator
+* For simulation, https://github.com/thinclab/thinc_simulator
 * If you want to write a program to control drones over UDP sockets, visit 
-  http://lhotse.cs.uga.edu/gitlab/multi-robotics/gatacdronecontrol.
+  https://github.com/thinclab/gatacdronecontrol.
 
 Usage
 -----
